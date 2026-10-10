@@ -135,7 +135,33 @@ def describe_image(image_b64: str, model: Optional[str] = None) -> str:
         raise LLMError(f"vision failed: {exc}") from exc
 
 
+def _normalize(data: dict) -> dict:
+    try:
+        confidence = float(data.get("confidence") or 0.0)
+    except (TypeError, ValueError):
+        confidence = 0.0
+    confidence = max(0.0, min(1.0, confidence))
+    raw_tags = data.get("tags") or []
+    if not isinstance(raw_tags, (list, tuple)):
+        raw_tags = [raw_tags]
+    return {
+        "species": str(data.get("species") or "unidentified sighting").strip() or "unidentified sighting",
+        "common_name": (data.get("common_name") or None),
+        "category": str(data.get("category") or "other").strip().lower() or "other",
+        "confidence": confidence,
+        "note": str(data.get("note") or "").strip(),
+        "tags": [str(t).strip().lower() for t in raw_tags if str(t).strip()][:5],
+        "season_note": (data.get("season_note") or None),
+    }
+
+
 def parse_observation(text: str, image_b64: Optional[str] = None) -> dict:
+    """Turn free text (and optional image) into a structured observation.
+
+    Raises LLMError if the local model cannot be reached or returns something
+    that cannot be read. Callers should still persist the raw observation so
+    that no user data is ever lost when the model is unavailable.
+    """
     user_content = f"Field note: {text.strip()}" if text and text.strip() else "Field note: (a photo with no text)"
     message = {"role": "user", "content": user_content}
     model = config.MODEL
@@ -145,17 +171,13 @@ def parse_observation(text: str, image_b64: Optional[str] = None) -> dict:
     try:
         content = _chat([{"role": "system", "content": PARSE_SYSTEM}, message], model=model)
         data = _extract_json(content)
-    except Exception:
-        data = {}
-    return {
-        "species": str(data.get("species") or "unidentified sighting").strip(),
-        "common_name": (data.get("common_name") or None),
-        "category": str(data.get("category") or "other").strip().lower(),
-        "confidence": float(data.get("confidence") or 0.0),
-        "note": str(data.get("note") or "").strip(),
-        "tags": [str(t).lower() for t in (data.get("tags") or [])][:5],
-        "season_note": (data.get("season_note") or None),
-    }
+    except LLMError:
+        raise
+    except Exception as exc:
+        raise LLMError(f"could not read the field note: {exc}") from exc
+    if not isinstance(data, dict):
+        raise LLMError("model did not return an observation object")
+    return _normalize(data)
 
 
 def answer(question: str, context: str) -> str:

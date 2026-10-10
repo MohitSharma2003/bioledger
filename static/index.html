@@ -35,6 +35,8 @@
   </header>
 
   <main>
+    <div id="ai-banner" class="banner" hidden></div>
+
     <section class="leaf-spread" id="open-field">
       <header class="section-head">
         <span class="section-head__no">01</span>
@@ -123,13 +125,33 @@
         <span class="section-head__no">05</span>
         <div>
           <h2 class="section-head__title">Recent sightings</h2>
-          <p class="section-head__desc">Your personal field archive, most recent first.</p>
+          <p class="section-head__desc">Your personal field archive. Search it, filter it, open any record.</p>
         </div>
         <button id="seed-btn" class="ghost" type="button">Load demo sightings</button>
       </header>
-      <ul id="observations" class="archive-list"></ul>
+
+      <div class="archive-tools">
+        <div class="search">
+          <label class="field-label" for="search-input">Search the ledger</label>
+          <input id="search-input" type="search" placeholder="Species, note, place, or tag&hellip;" autocomplete="off" />
+        </div>
+        <div class="filters">
+          <span class="field-label" id="filters-label">Filter by category</span>
+          <div id="category-filters" class="chips" role="group" aria-labelledby="filters-label"></div>
+        </div>
+      </div>
+
+      <ul id="observations" class="archive-list" aria-live="polite"></ul>
+      <p id="archive-status" class="archive-status"></p>
     </section>
   </main>
+
+  <div id="detail" class="detail-overlay" hidden>
+    <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1">
+      <button id="detail-close" class="detail-close" type="button" aria-label="Close record">&times;</button>
+      <div id="detail-body"></div>
+    </div>
+  </div>
 
   <footer class="colophon">
     <p class="colophon__mark">Bioledger</p>

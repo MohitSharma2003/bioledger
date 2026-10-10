@@ -113,6 +113,37 @@ class SQLiteStore:
             ).fetchall()
         return [self._row(r) for r in rows]
 
+    def search_observations(self, query: str = "", category: str = "", limit: int = 100):
+        sql = "SELECT * FROM observations"
+        clauses, params = [], []
+        q = (query or "").strip().lower()
+        if q:
+            like = f"%{q}%"
+            clauses.append(
+                "(lower(species) LIKE ? OR lower(IFNULL(common_name,'')) LIKE ? "
+                "OR lower(text) LIKE ? OR lower(IFNULL(note,'')) LIKE ? "
+                "OR lower(IFNULL(tags,'')) LIKE ? OR lower(IFNULL(place,'')) LIKE ?)"
+            )
+            params.extend([like] * 6)
+        if category:
+            clauses.append("lower(IFNULL(category,'')) = ?")
+            params.append(category.strip().lower())
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        with self._conn() as con:
+            rows = con.execute(sql, params).fetchall()
+        return [self._row(r) for r in rows]
+
+    def categories(self):
+        with self._conn() as con:
+            rows = con.execute(
+                "SELECT lower(IFNULL(category,'other')) c, COUNT(*) n FROM observations "
+                "GROUP BY lower(IFNULL(category,'other')) ORDER BY n DESC, c ASC"
+            ).fetchall()
+        return [{"category": r["c"], "count": r["n"]} for r in rows]
+
     def get_observation(self, obs_id: int):
         with self._conn() as con:
             row = con.execute("SELECT * FROM observations WHERE id = ?", (obs_id,)).fetchone()
@@ -276,6 +307,38 @@ class PostgresStore:
                 "SELECT * FROM observations ORDER BY created_at DESC LIMIT %s", (limit,)
             ).fetchall()
         return [self._row(r) for r in rows]
+
+    def search_observations(self, query: str = "", category: str = "", limit: int = 100):
+        sql = "SELECT * FROM observations"
+        clauses, params = [], []
+        q = (query or "").strip().lower()
+        if q:
+            like = f"%{q}%"
+            clauses.append(
+                "(lower(species) LIKE %s OR lower(coalesce(common_name,'')) LIKE %s "
+                "OR lower(text) LIKE %s OR lower(coalesce(note,'')) LIKE %s "
+                "OR lower(coalesce(place,'')) LIKE %s "
+                "OR lower(coalesce(array_to_string(tags, ' '),'')) LIKE %s)"
+            )
+            params.extend([like] * 6)
+        if category:
+            clauses.append("lower(coalesce(category,'')) = %s")
+            params.append(category.strip().lower())
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
+        sql += " ORDER BY created_at DESC LIMIT %s"
+        params.append(limit)
+        with self._conn() as con:
+            rows = con.execute(sql, params).fetchall()
+        return [self._row(r) for r in rows]
+
+    def categories(self):
+        with self._conn() as con:
+            rows = con.execute(
+                "SELECT lower(coalesce(category,'other')) c, COUNT(*) n FROM observations "
+                "GROUP BY lower(coalesce(category,'other')) ORDER BY n DESC, c ASC"
+            ).fetchall()
+        return [{"category": r["c"], "count": r["n"]} for r in rows]
 
     def get_observation(self, obs_id: int):
         with self._conn() as con:

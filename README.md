@@ -64,6 +64,23 @@ just cannot write new notes until it is back.
 Prefer a tiny dedicated vision model? Pull `moondream` and set
 `BIOLEDGER_VISION_MODEL=moondream`.
 
+Photos are previewed before you submit, can be removed or replaced, and are validated for
+type and size (10 MB by default) before upload.
+
+## Using the journal
+
+- **Structured field notes.** Every submission is turned into a specimen record: suggested
+  subject, category, confidence, tags, the model's interpretation, date, and locality.
+- **Honest uncertainty.** When confidence is low or no species could be named, the record
+  says so plainly instead of inventing a name.
+- **Search and filter.** Search the whole ledger by species, note, place, or tag, and filter
+  by category. Open any entry to read its full record.
+- **Never lose a note.** The raw observation is written to the database *before* the model
+  is called. If Ollama is unavailable, the sighting is still saved and the UI explains what
+  happened rather than silently dropping it.
+- **Offline-first status.** The masthead shows the true model/backend state, and previously
+  saved sightings stay readable and searchable with the model switched off.
+
 ## The scalable path: TimescaleDB + pgvector (Tiger Cloud)
 
 Set a Postgres connection string and Bioledger switches stores automatically:

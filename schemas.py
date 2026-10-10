@@ -39,6 +39,8 @@ class ObserveResponse(BaseModel):
     similar: List[SimilarResult] = Field(default_factory=list)
     in_season: List[dict] = Field(default_factory=list)
     used_vision: bool = False
+    ai_processed: bool = True
+    notice: Optional[str] = None
 
 
 class Stats(BaseModel):
