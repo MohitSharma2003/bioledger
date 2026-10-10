@@ -3,31 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bioledger — an offline naturalist field notebook</title>
+  <title>Bioledger — a field notebook that runs on your laptop</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <header class="site-header">
-    <div class="brand">
-      <span class="leaf">&#127807;</span>
-      <div>
-        <h1>Bioledger</h1>
-        <p class="tagline">Spend ten minutes outside. Your laptop writes the field note.</p>
+    <div class="masthead">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 27c0-8 3-13 11-16-1 8-4 13-11 16Z"/>
+            <path d="M16 27C16 19 13 14 5 11c1 8 4 13 11 16Z"/>
+            <path d="M16 27v-6"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>Bioledger</h1>
+          <p class="tagline">A field notebook that runs on your laptop</p>
+        </div>
       </div>
+      <div id="status" class="status">checking local model&hellip;</div>
     </div>
-    <div id="status" class="status">checking local model&hellip;</div>
+    <div class="masthead-rule"></div>
   </header>
 
   <main>
-    <section class="card">
-      <h2>What did you notice out there?</h2>
+    <section class="card card--observe">
+      <div class="sec-head">
+        <span class="sec-no">01</span>
+        <h2>What did you notice out there?</h2>
+      </div>
+      <p class="hint">One sentence is enough. Add a photo if you took one &mdash; it never leaves this machine.</p>
       <form id="observe-form">
         <textarea id="text" rows="3" placeholder="e.g. A copper dragonfly kept landing on the same reed by the pond."></textarea>
         <div class="row">
-          <input id="place" type="text" placeholder="Where? (optional)" />
+          <input id="place" type="text" placeholder="Where were you? (optional)" />
           <label class="file">
             <input id="photo" type="file" accept="image/*" />
-            <span id="photo-label">Add photo (optional)</span>
+            <span id="photo-label">Attach a photo</span>
           </label>
         </div>
         <button id="observe-btn" type="submit">Log this sighting</button>
@@ -36,7 +50,10 @@
     </section>
 
     <section class="card">
-      <h2>Ask your journal</h2>
+      <div class="sec-head">
+        <span class="sec-no">02</span>
+        <h2>Ask your journal</h2>
+      </div>
       <form id="ask-form">
         <input id="question" type="text" placeholder="What flowers have I seen in spring?" />
         <button type="submit">Ask</button>
@@ -46,19 +63,29 @@
 
     <section class="grid">
       <div class="card">
-        <h2>Your ledger</h2>
+        <div class="sec-head">
+          <span class="sec-no">03</span>
+          <h2>Your ledger</h2>
+        </div>
         <div id="stats" class="stats"></div>
         <div id="timeline" class="timeline"></div>
+        <div class="timeline-cap"><span>30 days ago</span><span>today</span></div>
       </div>
       <div class="card">
-        <h2>In season</h2>
+        <div class="sec-head">
+          <span class="sec-no">04</span>
+          <h2>In season</h2>
+        </div>
         <ul id="season" class="list"></ul>
       </div>
     </section>
 
     <section class="card">
       <div class="card-head">
-        <h2>Recent sightings</h2>
+        <div class="sec-head">
+          <span class="sec-no">05</span>
+          <h2>Recent sightings</h2>
+        </div>
         <button id="seed-btn" class="ghost" type="button">Load demo sightings</button>
       </div>
       <ul id="observations" class="list"></ul>
@@ -66,7 +93,7 @@
   </main>
 
   <footer>
-    <p>Runs entirely on your machine: open-weight Gemma via Ollama, no cloud, no API key. Your notes stay on disk.</p>
+    <p>Runs entirely on this machine &mdash; open-weight Gemma via Ollama, no cloud, no API key. Your notes stay on disk.</p>
   </footer>
 
   <script src="/static/app.js"></script>

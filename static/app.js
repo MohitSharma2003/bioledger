@@ -36,18 +36,20 @@ async function loadHealth() {
   }
 }
 
-function renderObservationCard(obs, similar, usedVision) {
+function renderObservationCard(obs, similar, usedVision, photoURL) {
   const tags = (obs.tags || []).map((t) => `<span class="chip">${esc(t)}</span>`).join("");
   const similarHtml = (similar && similar.length)
     ? `<div class="similar">Similar past sightings:<ul>${similar
         .map((s) => `<li>${esc(s.observation.species)} (${(s.score * 100).toFixed(0)}% match)</li>`)
         .join("")}</ul></div>`
     : "";
+  const photoHtml = photoURL ? `<img class="obs-photo" src="${esc(photoURL)}" alt="The photo you logged" />` : "";
   $("result").innerHTML = `
     <div class="obs-card">
       <h3>${esc(obs.common_name || obs.species)}</h3>
       <div class="meta">${esc(obs.category)} \u00b7 confidence ${(obs.confidence * 100).toFixed(0)}%
         ${usedVision ? "\u00b7 read from your photo" : ""} ${obs.place ? "\u00b7 " + esc(obs.place) : ""}</div>
+      ${photoHtml}
       <p>${esc(obs.note || obs.text)}</p>
       <div>${tags}</div>
       ${obs.season_note ? `<p class="meta">${esc(obs.season_note)}</p>` : ""}
@@ -65,23 +67,30 @@ async function submitObserve(event) {
     return;
   }
   btn.disabled = true;
-  btn.textContent = "Reading the field\u2026";
+  let lastText = btn.textContent;
+  btn.textContent = photo ? "Reading your photo \u2026" : "Writing the field note \u2026";
+  let photoURL = null;
+  if (photo) {
+    photoURL = URL.createObjectURL(photo);
+  }
+  $("result").innerHTML = '<p class="meta">Thinking locally with Ollama \u2026</p>';
   try {
     const form = new FormData();
     form.append("text", text);
     form.append("place", $("place").value.trim());
     if (photo) form.append("photo", photo);
     const data = await api("/api/observe", { method: "POST", body: form });
-    renderObservationCard(data.observation, data.similar, data.used_vision);
+    renderObservationCard(data.observation, data.similar, data.used_vision, photoURL);
     $("text").value = "";
     $("photo").value = "";
-    $("photo-label").textContent = "Add photo (optional)";
+    $("photo-label").textContent = "Attach a photo";
     await refreshLedger();
   } catch (e) {
     $("result").innerHTML = `<p class="meta">Could not log that: ${esc(e.message)}</p>`;
+    if (photoURL) URL.revokeObjectURL(photoURL);
   } finally {
     btn.disabled = false;
-    btn.textContent = "Log this sighting";
+    btn.textContent = lastText || "Log this sighting";
   }
 }
 
@@ -89,7 +98,7 @@ async function submitAsk(event) {
   event.preventDefault();
   const question = $("question").value.trim();
   if (!question) return;
-  $("answer").innerHTML = '<p class="meta">Thinking with the local model\u2026</p>';
+  $("answer").innerHTML = '<p class="meta">Thinking locally with Ollama \u2026</p>';
   try {
     const data = await api("/api/ask", {
       method: "POST",
@@ -152,7 +161,8 @@ $("observe-form").addEventListener("submit", submitObserve);
 $("ask-form").addEventListener("submit", submitAsk);
 $("seed-btn").addEventListener("click", seedDemo);
 $("photo").addEventListener("change", (e) => {
-  $("photo-label").textContent = e.target.files[0] ? e.target.files[0].name : "Add photo (optional)";
+  const f = e.target.files[0];
+  $("photo-label").textContent = f ? f.name : "Attach a photo";
 });
 
 loadHealth();
