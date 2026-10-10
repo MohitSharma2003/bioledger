@@ -1,0 +1,30 @@
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_PASSWORD: bioledger
+      POSTGRES_DB: bioledger
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - bioledger_pgdata:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434
+      DATABASE_URL: postgres://postgres:bioledger@db:5432/bioledger
+    ports:
+      - "8000:8000"
+
+volumes:
+  bioledger_pgdata:

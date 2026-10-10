@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bioledger — an offline naturalist field notebook</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="leaf">&#127807;</span>
+      <div>
+        <h1>Bioledger</h1>
+        <p class="tagline">Spend ten minutes outside. Your laptop writes the field note.</p>
+      </div>
+    </div>
+    <div id="status" class="status">checking local model&hellip;</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>What did you notice out there?</h2>
+      <form id="observe-form">
+        <textarea id="text" rows="3" placeholder="e.g. A copper dragonfly kept landing on the same reed by the pond."></textarea>
+        <div class="row">
+          <input id="place" type="text" placeholder="Where? (optional)" />
+          <label class="file">
+            <input id="photo" type="file" accept="image/*" />
+            <span id="photo-label">Add photo (optional)</span>
+          </label>
+        </div>
+        <button id="observe-btn" type="submit">Log this sighting</button>
+      </form>
+      <div id="result"></div>
+    </section>
+
+    <section class="card">
+      <h2>Ask your journal</h2>
+      <form id="ask-form">
+        <input id="question" type="text" placeholder="What flowers have I seen in spring?" />
+        <button type="submit">Ask</button>
+      </form>
+      <div id="answer"></div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Your ledger</h2>
+        <div id="stats" class="stats"></div>
+        <div id="timeline" class="timeline"></div>
+      </div>
+      <div class="card">
+        <h2>In season</h2>
+        <ul id="season" class="list"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Recent sightings</h2>
+        <button id="seed-btn" class="ghost" type="button">Load demo sightings</button>
+      </div>
+      <ul id="observations" class="list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Runs entirely on your machine: open-weight Gemma via Ollama, no cloud, no API key. Your notes stay on disk.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
