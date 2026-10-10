@@ -3,70 +3,137 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bioledger — an offline naturalist field notebook</title>
+  <title>Bioledger &mdash; an offline naturalist field notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=DM+Sans:opsz,wght@9..40,400..600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <span class="leaf">&#127807;</span>
-      <div>
-        <h1>Bioledger</h1>
-        <p class="tagline">Spend ten minutes outside. Your laptop writes the field note.</p>
+  <a class="skip" href="#open-field">Skip to field notes</a>
+
+  <header class="masthead">
+    <div class="masthead__brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 29c0-9 0-13 0-16" />
+        <path d="M16 13c0-5-4-8-9-8 0 5 4 8 9 8Z" />
+        <path d="M16 17c0-4 3.4-7 8-7 0 4-3.4 7-8 7Z" />
+      </svg>
+      <div class="masthead__title">
+        <a class="wordmark" href="/">Bioledger</a>
+        <p class="masthead__tagline">A living field ledger &mdash; written by a model that runs on your own machine.</p>
       </div>
     </div>
-    <div id="status" class="status">checking local model&hellip;</div>
+    <div class="masthead__meta">
+      <span class="masthead__rule" aria-hidden="true"></span>
+      <p class="meta-label">Local model</p>
+      <div id="status" class="status">checking local model&hellip;</div>
+    </div>
   </header>
 
   <main>
-    <section class="card">
-      <h2>What did you notice out there?</h2>
-      <form id="observe-form">
-        <textarea id="text" rows="3" placeholder="e.g. A copper dragonfly kept landing on the same reed by the pond."></textarea>
-        <div class="row">
-          <input id="place" type="text" placeholder="Where? (optional)" />
-          <label class="file">
-            <input id="photo" type="file" accept="image/*" />
-            <span id="photo-label">Add photo (optional)</span>
-          </label>
+    <section class="leaf-spread" id="open-field">
+      <header class="section-head">
+        <span class="section-head__no">01</span>
+        <div>
+          <h2 class="section-head__title">Open a field note</h2>
+          <p class="section-head__desc">Write what you saw, or attach a photograph. Gemma reads it and keeps the record for you.</p>
         </div>
-        <button id="observe-btn" type="submit">Log this sighting</button>
+      </header>
+
+      <form id="observe-form" class="composer">
+        <div class="composer__field">
+          <label class="field-label" for="text">Observation</label>
+          <textarea id="text" rows="3" placeholder="e.g. A copper dragonfly kept landing on the same reed by the pond."></textarea>
+        </div>
+
+        <div class="composer__row">
+          <div class="composer__field composer__field--place">
+            <label class="field-label" for="place">Locality</label>
+            <input id="place" type="text" placeholder="Optional &mdash; pond edge, north garden" />
+          </div>
+          <div class="composer__field composer__field--photo">
+            <span class="field-label">Plate</span>
+            <label class="plate-drop">
+              <input id="photo" type="file" accept="image/*" />
+              <span id="photo-label">Attach a photograph</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="photo-preview" class="photo-preview" hidden></div>
+
+        <div class="composer__actions">
+          <button id="observe-btn" type="submit">Log this sighting</button>
+          <span class="composer__hint">Stays on disk. No account, no cloud.</span>
+        </div>
       </form>
+
       <div id="result"></div>
     </section>
 
-    <section class="card">
-      <h2>Ask your journal</h2>
-      <form id="ask-form">
+    <section class="ask-strip">
+      <header class="section-head section-head--tight">
+        <span class="section-head__no">02</span>
+        <div>
+          <h2 class="section-head__title">Consult the ledger</h2>
+          <p class="section-head__desc">Ask a question in plain language. The answer is drawn only from your own sightings.</p>
+        </div>
+      </header>
+      <form id="ask-form" class="composer composer--inline">
         <input id="question" type="text" placeholder="What flowers have I seen in spring?" />
         <button type="submit">Ask</button>
       </form>
       <div id="answer"></div>
     </section>
 
-    <section class="grid">
-      <div class="card">
-        <h2>Your ledger</h2>
-        <div id="stats" class="stats"></div>
-        <div id="timeline" class="timeline"></div>
+    <section class="ledger">
+      <div class="ledger__column">
+        <header class="section-head section-head--tight">
+          <span class="section-head__no">03</span>
+          <div>
+            <h2 class="section-head__title">The ledger</h2>
+            <p class="section-head__desc">A record of attention, kept day by day.</p>
+          </div>
+        </header>
+        <div id="stats" class="tally"></div>
+        <div class="chart">
+          <div class="chart__labels"><span>30 days ago</span><span>today</span></div>
+          <div id="timeline" class="timeline"></div>
+        </div>
       </div>
-      <div class="card">
-        <h2>In season</h2>
-        <ul id="season" class="list"></ul>
+
+      <div class="ledger__column ledger__column--index">
+        <header class="section-head section-head--tight">
+          <span class="section-head__no">04</span>
+          <div>
+            <h2 class="section-head__title">In season</h2>
+            <p class="section-head__desc">Species met this month, by frequency.</p>
+          </div>
+        </header>
+        <ul id="season" class="index-list"></ul>
       </div>
     </section>
 
-    <section class="card">
-      <div class="card-head">
-        <h2>Recent sightings</h2>
+    <section class="archive">
+      <header class="section-head">
+        <span class="section-head__no">05</span>
+        <div>
+          <h2 class="section-head__title">Recent sightings</h2>
+          <p class="section-head__desc">Your personal field archive, most recent first.</p>
+        </div>
         <button id="seed-btn" class="ghost" type="button">Load demo sightings</button>
-      </div>
-      <ul id="observations" class="list"></ul>
+      </header>
+      <ul id="observations" class="archive-list"></ul>
     </section>
   </main>
 
-  <footer>
-    <p>Runs entirely on your machine: open-weight Gemma via Ollama, no cloud, no API key. Your notes stay on disk.</p>
+  <footer class="colophon">
+    <p class="colophon__mark">Bioledger</p>
+    <p class="colophon__note">Runs entirely on your machine &mdash; open-weight Gemma via Ollama, no cloud, no API key. Your notes stay on disk.</p>
   </footer>
 
   <script src="/static/app.js"></script>
