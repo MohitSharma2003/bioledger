@@ -130,7 +130,22 @@ seed.py          demo sightings
 main.py          FastAPI app and routes
 mcp_server.py    MCP stdio server
 db/schema.sql    hypertable + continuous aggregate + pgvector
-static/          single-page UI
+web/             React + Vite + Tailwind source for the UI
+static/          built UI (served by FastAPI; regenerate with `npm run build`)
+```
+
+## Front-end
+
+The interface is a small React app (Vite + Tailwind, shadcn-style primitives over Radix).
+It is built into `static/` and served by FastAPI, so the runtime is still one process and
+one port.
+
+```bash
+cd web
+npm install
+npm run build     # writes to ../static
+# or, for live development against the API:
+npm run dev       # http://127.0.0.1:5173 (proxies /api to :8001)
 ```
 
 ## Why open innovation matters here

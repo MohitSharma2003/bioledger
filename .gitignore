@@ -9,3 +9,7 @@ env/
 .env
 .pytest_cache/
 .DS_Store
+
+web/node_modules/
+web/dist/
+node_modules/

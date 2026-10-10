@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bioledger">
+  <rect width="64" height="64" rx="13" fill="#17321f"/>
+  <path d="M46.5 15.5c-16 0-26.2 10-27 26 0 2.2 0 4.2 1 6.2 1-1.2 2-2.4 3-4 3 2 7 3 11 2 11-2 13.2-16.2 12-30.2z" fill="#dfe5d3"/>
+  <path d="M20 48.5C26 36 34.5 25.5 46.5 15.5" stroke="#7d8f4b" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+</svg>
