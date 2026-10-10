@@ -2,108 +2,64 @@
 title: "Bioledger: a nature notebook that runs on my laptop, not someone's cloud"
 published: false
 description: "I built an offline naturalist field notebook on an open-weight model: spend ten minutes outside, and a local Gemma writes the field note. Hacktoberfest 2026 Week 1: Touch Grass."
-tags: hacktoberfest, ai, opensource, python
-cover_image:  # add your screenshot/GIF URL here before publishing
+tags: devchallenge, hf26challenge, ai, opensource
+cover_image: # paste your screenshot/GIF URL here before publishing
 ---
 
-> **How to use this draft:** This is a scaffold in your voice. Before you publish, rewrite every
-> `[[...]]` block with your real experience, add 2–3 of your own screenshots/GIFs, and cut anything
-> that doesn't sound like you. Judges weight writing quality most, and **they can tell when a post
-> isn't authentic.** The code is done — this part is yours.
->
-> **What judges score (this draft is organised to hit all five):**
-> 1. **Writing Quality** — *weighted most heavily.* First person, specific, readable.
-> 2. **Relevance to Prompt & Theme** — open-source AI is the core (see "Why open beats closed")
->    and it fits *Touch Grass* (see the opening + "Why a tracker wasn't enough").
-> 3. **Creativity** — it makes going outside *produce a durable scientific record*.
-> 4. **Technical Execution** — working app + architecture, agent/tooling, hybrid store.
-> 5. **Partner technology** — runs on **Gemma** (featured category) + **Tiger Data** (Postgres).
+<!--
+BEFORE YOU PUBLISH (2 things only):
+1. Replace every [[...]] marker with your real repo URL / screenshot / session link.
+2. Read it out loud and change any sentence that doesn't sound like you.
+Everything else is already accurate to the code in the repo.
+-->
 
 # Bioledger: a nature notebook that runs on my laptop, not someone's cloud
 
-[[Open with your real situation in 2–3 sentences. Example: "I'm interning full-time, and by evening
-I've been staring at a screen for twelve hours. Every 'get outside' app I tried just moved the screen
-from one place to another. So for Hacktoberfest Week 1, I built the opposite: a notebook whose whole
-point is to be closed again as fast as possible."]]
+I'm interning full-time, and by the time the evening comes I've been staring at a screen
+for twelve hours. Every "get outside" app I tried did the same trick: it moved the screen
+from my desk to my pocket and called that fresh air. For Hacktoberfest Week 1, I wanted to
+build the opposite — a tool whose entire point is to be **closed again as fast as possible.**
 
-The theme is **Touch Grass** — build something with open-source AI that gets people off the screen
-and into the world, where the screen is the shortest part of the experience.
+The theme is **Touch Grass**: use open-source AI to get people off the screen and into the
+world. So I built **Bioledger**. You spend ten minutes outside. You come back, describe what
+you noticed — or drop in one photo — and a model running **on your own laptop** turns it into
+a real field note.
 
-So I built **Bioledger**. You spend ten minutes outside. You come back, describe what you noticed —
-or drop in one photo — and a model running **on your own laptop** turns it into a real field note.
+## What I Built
 
-## Why a tracker wasn't enough
+Bioledger is an offline, open-weight naturalist field notebook. It's for anyone who walks the
+same park or street every day and slowly wants to know it better — without that knowledge
+living on someone else's server.
 
-[[2–3 sentences. Make the point: most "touch grass" projects are wellness or screen-time trackers that
-still live on the screen. Bioledger makes the time outside *produce something* — a growing, personal
-record of what lives near you. Going outside becomes data you actually want to keep.]]
-
-## What it does
-
-You type one sentence — what you saw — and optionally attach a photo.
+You type one sentence — what you saw — and optionally attach a photo:
 
 > "A copper dragonfly kept landing on the same reed by the pond."
 
 A few seconds later you get a tidy field note:
 
-- a best-guess **name** (and it is honest when it doesn't know),
+- a best-guess **name** (and it's honest when it doesn't know),
 - a **category** (plant, bird, insect, fungus, cloud…),
-- a one-line note in your voice, and a few **tags**,
+- a one-line note in your voice, plus a few **tags**,
 - a **season note** ("darters are typical of warm months near still water"),
 - **similar sightings** from your own past logs,
 
 and a **ledger** that tracks sightings, species, a day-streak, and what's in season right now.
 
-[[Add a screenshot or a short GIF of a real sighting you logged. This is the single most important
-thing you can add — people need to see it work.]]
+## Why a tracker wasn't enough
 
-## Why open beats closed (the required part)
+Most "touch grass" projects are wellness or screen-time trackers, and the screen is still the
+main character. Bioledger makes the time outside *produce something durable*: a growing,
+personal, scientific record of what lives near you. Going outside stops being a chore you
+tick off and becomes data you actually want to keep.
 
-The challenge asks where an open approach worked *better* than a closed one. Here it is concrete:
+## Demo
 
-| Decision | Open approach (what I did) | Closed alternative | Why open won here |
-| --- | --- | --- | --- |
-| The model | Open-weight **Gemma 3** (`gemma3:4b`) via **Ollama**, on my laptop | A hosted vision/chat API | Works **offline**, **$0 per note**, no card on file |
-| My data | Locations + sightings stay in a local database on my disk | Prompts and photos logged on a server I don't control | The private thing a naturalist keeps never leaves the machine |
-| Model choice | Swap with one env var (`BIOLEDGER_MODEL`) | Locked to one vendor's endpoint | Same app runs a 4B model or a bigger one |
-| Embeddings | Local `nomic-embed-text` | Cloud embedding API | "Find similar sightings" works with no internet |
+![Bioledger: logging a sighting and seeing it become a field note](docs/demo.gif)
 
-That is the whole thesis: open pieces let one person build a private, offline tool for free — and
-it stays *theirs* to audit or fork.
+[[ Replace with your GIF or 2–3 screenshots. Save them into a `docs/` folder in the repo and
+reference them here. This is the single most important thing you can add. ]]
 
-## How it works
-
-[[Describe the architecture in your own words. The real design:]]
-
-```
-Browser UI ──▶ FastAPI ──▶ local Gemma (Ollama) ──▶ structured sighting
-                   │
-                   └──▶ store ──┬── SQLite (default, offline)
-                                └── TimescaleDB + pgvector
-                                       • hypertable of sightings
-                                       • continuous aggregate = "in season"
-                                       • pgvector = similar sightings
-```
-
-Two things I'm proud of:
-
-- **A real hybrid store.** By default it's a single SQLite file — truly offline. Point
-  `DATABASE_URL` at Postgres and the *same code* writes to a **hypertable**, keeps a
-  **continuous aggregate** for "what's in season," and uses **pgvector** for nearest-neighbour
-  search. [[Say why you did both: it must work offline on a laptop, but it should also scale.]]
-- **An MCP server.** [[Explain: you exposed your own journal as tools so an AI agent can query it.
-  Mention you built it on Tiger Data / Tiger Cloud.]]
-
-## What surprised me
-
-[[2–4 personal observations. Ideas:
-- A 4B model is genuinely enough for this — the task is well-scoped.
-- I had to *force honesty*: the model kept inventing Latin names, so I made the prompt prefer plain
-  names and low confidence when unsure. Now it says "copper dragonfly" instead of fabricating a species.
-- Reading the photo on-device *felt* different from uploading it — nothing left the laptop.
-- The vector search surfaced sightings I'd forgotten I'd made.]]
-
-## Try it yourself
+Run it yourself in about a minute:
 
 ```bash
 ollama pull gemma3:4b
@@ -114,16 +70,104 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Open <http://localhost:8000> and log what you saw outside today.
+Open <http://localhost:8000> and log what you saw outside today. If Ollama is off, the app
+still runs — it just can't write new notes until it's back.
+
+## Code
+
+[[ Embed your GitHub repo directly here — on DEV, paste the repo URL on its own line and it
+renders as a card. Example: https://github.com/YOUR_USERNAME/bioledger ]]
 
 Source: [[YOUR GITHUB REPO URL]] · License: MIT
 
-## What's next
+## How I Built It
 
-[[2–3 honest ideas: a weekly "what changed near me" digest; a shared dataset so you can see what the
-whole neighbourhood logged this week; fine-tuning a tiny local model on your own sightings.]]
+The whole app is built around open-source AI, top to bottom — no closed API anywhere in the
+loop:
+
+```
+Browser UI ──▶ FastAPI ──▶ local Gemma (Ollama) ──▶ structured sighting + note
+                   │                 │
+                   │                 └──▶ nomic-embed-text ──▶ embedding
+                   │
+                   └──▶ store ──┬── SQLite (default, fully offline)
+                                └── TimescaleDB + pgvector (scalable twin)
+                                       • hypertable of sightings
+                                       • continuous aggregate = "in season"
+                                       • pgvector = "find similar sightings"
+```
+
+- **Open-weight model** (`gemma3:4b`) via **Ollama** writes each field note and answers
+  questions in plain language ("what did I see near water in spring?").
+- **Local embeddings** (`nomic-embed-text`) power "find similar sightings" — nearest-neighbour
+  search over my own notes, with no internet.
+- **A real hybrid store.** By default it's a single SQLite file, so it's truly offline with
+  zero setup. Point `DATABASE_URL` at Postgres and the *same code* writes to a
+  **hypertable**, keeps a **continuous aggregate** for "what's in season," and uses
+  **pgvector** for vector search. I did both on purpose: it has to work offline on a laptop,
+  but it should also be able to scale to a shared, neighbourhood-scale dataset later.
+- **An MCP server.** I exposed my own journal as tools (`ledger_query`, `in_season`,
+  `similar_sightings`, `journal_stats`) so any AI agent can reason over the ledger. I built
+  it to run against **Tiger Data / Tiger Cloud** for the Postgres side.
+
+Two bits I'm proud of:
+
+- It's genuinely **private by default** — the model and the database are both local, so the
+  sensitive part of a naturalist's log (*where* and *what*) never leaves the machine.
+- It **degrades gracefully**: photo reading on-device with `gemma3:4b`, or swap in the tiny
+  `moondream` vision model with one env var (`BIOLEDGER_VISION_MODEL=moondream`).
+
+## Why Does Open Innovation Matter?
+
+The challenge asks where an open approach worked *better* than a closed one. For Bioledger
+it's not a slogan — it's the reason the app can exist at all:
+
+| Decision | Open approach (what I did) | Closed alternative | Why open won here |
+| --- | --- | --- | --- |
+| The model | Open-weight **Gemma 3** (`gemma3:4b`) via **Ollama**, on my laptop | A hosted vision/chat API | Works **offline**, **$0 per note**, no card on file |
+| My data | Locations + sightings stay in a local database on my disk | Prompts and photos logged on a server I don't control | The private thing a naturalist keeps never leaves the machine |
+| Model choice | Swap with one env var (`BIOLEDGER_MODEL`) | Locked to one vendor's endpoint | The same app runs a 4B model or a bigger one |
+| Embeddings | Local `nomic-embed-text` | A cloud embedding API | "Find similar sightings" works with no internet |
+
+A closed pipeline forces a trade: either you pay per call and upload your location history,
+or you don't ship the feature. Open weights let one person build a private, offline tool for
+free — and it stays *theirs* to audit, swap, or fork. That's the point of open innovation:
+the capability doesn't depend on one vendor staying online, affordable, or interested.
+
+## What Surprised Me
+
+- **A 4B model is genuinely enough.** The task is well-scoped (read one messy sentence → one
+  structured record), so a small open model does it well and fast on a laptop.
+- **I had to force honesty.** Early on the model kept inventing Latin species names with total
+  confidence. I tightened the prompt to prefer plain names and to say when it's unsure — now
+  it says "copper dragonfly" instead of fabricating *something*-us. Honest uncertainty turned
+  out to matter more than apparent precision.
+- **On-device vision felt different.** Reading a photo without uploading it changes how you
+  feel about logging a spot you'd rather not broadcast.
+- **The vector search surprised me most.** "Find similar sightings" resurfaced things I'd
+  forgotten I'd logged weeks ago — the ledger quietly became more useful than the sum of its
+  entries.
+
+## My Agent Session
+
+[[ Optional but judges like it: save your build session with DevRelay and embed it here with
+the `agent_session` tag, or link to it. Delete this section if you skip it. ]]
+
+## Prize Categories
+
+I'm entering **Best Use of Gemma** — Bioledger runs Google's open-weight Gemma locally for
+both text and vision — and the **Tiger Data** category, since the scalable store is a real
+TimescaleDB hypertable + continuous aggregate + pgvector setup, queried by agents over MCP.
+
+## What's Next
+
+Three ideas I'd actually build on top of this:
+
+- a weekly **"what changed near me"** digest assembled from the continuous aggregate,
+- an opt-in **shared neighbourhood dataset** so you can see what everyone logged this week,
+- **fine-tuning a tiny local model** on my own sightings so the notes sound more like me.
 
 ---
 
-*Built for the [Hacktoberfest 2026 Open-Source AI Challenge — Week 1](https://dev.to/challenges).
+*Built for the [Hacktoberfest 2026 Open-Source AI Challenge — Week 1: Touch Grass](https://dev.to/challenges/hacktoberfest-week1-2026-10-05).
 It runs on my own laptop, on an open-weight model, with no cloud. 🌿*

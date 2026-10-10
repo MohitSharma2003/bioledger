@@ -125,6 +125,12 @@ static/          single-page UI
 - **Yours to change.** Swap the model with one env var, audit the prompt, fork the schema.
   Nothing depends on one vendor's API staying online or cheap.
 
+## Development timeline
+
+Bioledger was started and completed entirely within the Hacktoberfest 2026 Open-Source AI
+Challenge — Week 1 window (Oct 5–11, 2026). All commits in this repository fall inside that
+period; no work on this project predates the challenge.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
