@@ -26,6 +26,7 @@ export default {
         serif: ['"Fraunces"', "Iowan Old Style", "Palatino Linotype", "Georgia", "serif"],
         sans: ['"Manrope"', "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
         mono: ['"IBM Plex Mono"', "SFMono-Regular", "Consolas", "monospace"],
+        display: ['"Space Grotesk"', "Manrope", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Deliberate scale: display and headings lean on Fraunces; body on Manrope.
