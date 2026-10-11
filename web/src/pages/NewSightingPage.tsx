@@ -74,9 +74,9 @@ export function NewSightingPage() {
 
 function LedgerGlance({ stats }: { stats: Stats | null }) {
   return (
-    <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-5 py-4 shadow-specimen sm:w-auto">
-      <p className="field-label mb-3 text-[0.78rem]">Your ledger</p>
-      <div className="flex items-end gap-8">
+    <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-[1.875rem] py-6 shadow-specimen sm:w-auto">
+      <p className="field-label mb-4 text-[1.17rem]">Your ledger</p>
+      <div className="flex items-end gap-12">
         <Glance value={stats?.total ?? 0} label="sightings" tone="text-forest" />
         <Glance value={stats?.species ?? 0} label="species" tone="text-moss" />
         <Glance
@@ -100,8 +100,8 @@ function Glance({
 }) {
   return (
     <div>
-      <div className={cn("font-serif text-6xl leading-none", tone)}>{value}</div>
-      <div className="mt-1.5 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-muted">
+      <div className={cn("font-serif text-[5.625rem] leading-none", tone)}>{value}</div>
+      <div className="mt-[0.5625rem] font-mono text-[1.08rem] uppercase tracking-[0.1em] text-muted">
         {label}
       </div>
     </div>
