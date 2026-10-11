@@ -61,7 +61,10 @@ export function NewSighting({
     <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
       <form onSubmit={submit} className="space-y-5">
         <div>
-          <label htmlFor="text" className="field-label mb-2 block">
+          <label
+            htmlFor="text"
+            className="mb-3 block font-sans text-xl font-semibold leading-snug text-forest sm:text-2xl"
+          >
             What did you notice?
           </label>
           <Textarea
