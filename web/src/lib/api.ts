@@ -44,7 +44,7 @@ export const api = {
   stats: () => request<Stats>("/api/stats"),
   timeline: (days = 30) =>
     request<{ days: TimelineDay[] }>(`/api/timeline?days=${days}`),
-  season: () => request<{ species: SeasonRow[] }>("/api/season"),
+  season: () => request<{ month: number; species: SeasonRow[] }>("/api/season"),
   categories: () =>
     request<{ categories: CategoryCount[] }>("/api/categories"),
   observations: (params: ObservationQuery = {}) =>

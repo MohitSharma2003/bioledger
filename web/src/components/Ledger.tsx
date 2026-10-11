@@ -57,7 +57,7 @@ export function Ledger({
             ))}
           </div>
         ) : (
-          <EmptyState>No sightings yet. Record one above.</EmptyState>
+          <EmptyState>No sightings yet. Record one to start the chart.</EmptyState>
         )}
       </div>
 

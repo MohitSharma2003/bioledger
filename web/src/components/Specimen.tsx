@@ -1,12 +1,6 @@
 import { Camera, MapPin, Clock, Leaf } from "lucide-react";
 import { CategoryDot, categoryColor } from "./bits";
-import {
-  confidenceLabel,
-  formatDate,
-  formatTime,
-  seasonOf,
-  titleCase,
-} from "../lib/format";
+import { formatDate, formatTime, seasonOf, titleCase } from "../lib/format";
 import type { Observation, SimilarResult } from "../lib/types";
 
 export function Specimen({
@@ -24,10 +18,10 @@ export function Specimen({
   fresh?: boolean;
   photoURL?: string | null;
 }) {
-  const conf = confidenceLabel(o.confidence);
+  const pct = Math.round(o.confidence * 100);
   return (
     <article className="rounded-sm border border-rule-strong/80 bg-paper-raised shadow-specimen">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-rule px-6 py-5">
+      <header className="flex flex-wrap items-start justify-between gap-5 border-b border-rule px-6 py-5">
         <div>
           <p className="field-label mb-2 flex items-center gap-2">
             <CategoryDot category={o.category} />
@@ -37,25 +31,40 @@ export function Specimen({
                 <Camera size={12} /> from photo
               </span>
             ) : null}
+            {o.source === "demo" ? (
+              <span className="ml-1 rounded-full border border-ochre/50 px-2 py-0.5 text-[0.6rem] normal-case tracking-normal text-ochre">
+                sample
+              </span>
+            ) : null}
           </p>
-          <h3 className="display-title text-[1.9rem] leading-tight">
-            {o.species}
-          </h3>
+          <h3 className="species-name">{o.species}</h3>
           {o.common_name ? (
-            <p className="mt-0.5 font-serif text-lg italic text-moss">
+            <p className="mt-1 font-serif text-lg italic text-moss">
               {o.common_name}
             </p>
           ) : null}
         </div>
-        <span
-          className="rounded-full px-3 py-1 font-mono text-[0.66rem] uppercase tracking-[0.08em]"
-          style={{
-            color: categoryColor(o.category),
-            backgroundColor: `${categoryColor(o.category)}1f`,
-          }}
+
+        <div
+          className="min-w-[150px]"
+          title="The model's own estimate of how sure it is, from 0 to 100%."
         >
-          {conf} · {Math.round(o.confidence * 100)}%
-        </span>
+          <div className="field-label mb-1.5 text-right">Confidence</div>
+          <div className="flex items-center justify-end gap-2">
+            <span className="h-1.5 w-24 overflow-hidden rounded-full bg-sage">
+              <span
+                className="block h-full rounded-full"
+                style={{
+                  width: `${pct}%`,
+                  backgroundColor: categoryColor(o.category),
+                }}
+              />
+            </span>
+            <span className="w-9 text-right font-mono text-[0.7rem] text-muted">
+              {pct}%
+            </span>
+          </div>
+        </div>
       </header>
 
       <div className="grid gap-px bg-rule sm:grid-cols-3">
@@ -82,11 +91,11 @@ export function Specimen({
       ) : null}
 
       <div className="px-6 py-5">
-        <p className="font-serif text-[1.12rem] leading-relaxed text-ink">
+        <p className="text-[1.05rem] leading-relaxed text-ink">
           {o.note || o.text}
         </p>
         {o.season_note ? (
-          <p className="mt-3 border-l-2 border-moss-soft pl-4 font-serif text-[0.98rem] italic text-muted">
+          <p className="mt-3 border-l-2 border-moss-soft pl-4 text-[0.95rem] italic text-muted">
             {o.season_note}
           </p>
         ) : null}
@@ -131,7 +140,7 @@ export function Specimen({
 
       {fresh && season.length ? (
         <div className="border-t border-rule px-6 py-5">
-          <p className="field-label mb-3">Also in season this week</p>
+          <p className="field-label mb-3">Also logged this month</p>
           <div className="flex flex-wrap gap-2">
             {season.slice(0, 6).map((r) => (
               <span

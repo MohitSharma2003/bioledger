@@ -14,7 +14,7 @@ export function NewSighting({
   onResult,
 }: {
   modelReady: boolean;
-  onLogged: () => void;
+  onLogged?: () => void;
   onResult: (notice: string | null) => void;
 }) {
   const [text, setText] = useState("");
@@ -45,7 +45,7 @@ export function NewSighting({
       const res = await api.observe(form);
       setResult(res);
       onResult(res.ai_processed ? null : res.notice || "The model was unavailable.");
-      onLogged();
+      onLogged?.();
       setText("");
       setPlace("");
       pickPhoto(null);

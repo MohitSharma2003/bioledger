@@ -23,9 +23,19 @@ export default {
         alert: "#9c4a34",
       },
       fontFamily: {
-        serif: ['"Newsreader"', "Iowan Old Style", "Palatino Linotype", "Georgia", "serif"],
-        sans: ['"DM Sans"', "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
+        serif: ['"Fraunces"', "Iowan Old Style", "Palatino Linotype", "Georgia", "serif"],
+        sans: ['"Manrope"', "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
         mono: ['"IBM Plex Mono"', "SFMono-Regular", "Consolas", "monospace"],
+      },
+      fontSize: {
+        // Deliberate scale: display and headings lean on Fraunces; body on Manrope.
+        display: ["clamp(2.35rem, 4.6vw, 4.1rem)", { lineHeight: "1.02", letterSpacing: "-0.02em" }],
+        "page-title": ["clamp(2rem, 3.4vw, 3rem)", { lineHeight: "1.06", letterSpacing: "-0.018em" }],
+        "section-title": ["clamp(1.5rem, 2.3vw, 2.05rem)", { lineHeight: "1.12", letterSpacing: "-0.012em" }],
+        species: ["clamp(1.45rem, 2.2vw, 1.95rem)", { lineHeight: "1.14", letterSpacing: "-0.01em" }],
+        lead: ["clamp(1.1rem, 1.5vw, 1.3rem)", { lineHeight: "1.6" }],
+        body: ["1rem", { lineHeight: "1.65" }],
+        meta: ["0.72rem", { lineHeight: "1.4", letterSpacing: "0.06em" }],
       },
       maxWidth: {
         shell: "1500px",

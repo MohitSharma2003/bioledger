@@ -41,31 +41,27 @@ export function CategoryDot({
   );
 }
 
-export function SectionHeading({
-  index,
+export function PageHeader({
+  eyebrow,
   title,
-  description,
+  lead,
   actions,
 }: {
-  index: string;
+  eyebrow?: string;
   title: string;
-  description?: string;
+  lead?: string;
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-4 border-b border-rule pb-5 sm:flex-row sm:items-end sm:justify-between">
-      <div className="max-w-2xl">
-        <p className="eyebrow mb-2">{index}</p>
-        <h2 className="display-title text-[2rem] leading-[1.12] sm:text-[2.5rem]">
-          {title}
-        </h2>
-        {description ? (
-          <p className="mt-2 text-[0.95rem] leading-relaxed text-muted">
-            {description}
-          </p>
-        ) : null}
+    <header className="mb-8 border-b border-rule pb-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-3xl">
+          {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
+          <h1 className="display-title text-page-title">{title}</h1>
+          {lead ? <p className="mt-3 text-lead text-muted">{lead}</p> : null}
+        </div>
+        {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
     </header>
   );
 }
@@ -80,7 +76,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-sm border border-dashed border-rule-strong/70 bg-paper-raised/40 px-6 py-12 text-center font-serif text-[0.95rem] italic text-muted",
+        "rounded-sm border border-dashed border-rule-strong/70 bg-paper-raised/40 px-6 py-12 text-center text-[0.95rem] italic text-muted",
         className,
       )}
     >

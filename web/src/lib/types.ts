@@ -12,6 +12,7 @@ export interface Observation {
   note: string;
   tags: string[];
   season_note?: string | null;
+  source: string;
 }
 
 export interface SimilarResult {

@@ -36,8 +36,12 @@ export function titleCase(value: string): string {
   return value.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function confidenceLabel(value: number): string {
-  if (value >= 0.75) return "confident";
-  if (value >= 0.45) return "tentative";
-  return "guess";
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function monthName(month: number): string {
+  return MONTH_NAMES[Math.min(11, Math.max(0, month - 1))] ?? "";
 }
+

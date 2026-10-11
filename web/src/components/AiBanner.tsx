@@ -17,11 +17,7 @@ export function AiBanner({
         className="flex items-start gap-3 rounded-sm border border-ochre/40 bg-ochre/10 px-4 py-3.5 text-forest"
       >
         <WifiOff size={18} className="mt-0.5 shrink-0 text-ochre" />
-        <p className="text-[0.9rem] leading-relaxed">
-          <span className="font-medium">{notice}</span> Your entry is still saved
-          to the ledger. The model will fill in the identification when it is
-          reachable again.
-        </p>
+        <p className="text-[0.9rem] leading-relaxed">{notice}</p>
       </div>
     );
   }

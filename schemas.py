@@ -27,6 +27,7 @@ class Observation(BaseModel):
     note: str
     tags: List[str] = Field(default_factory=list)
     season_note: Optional[str] = None
+    source: str = "user"
 
 
 class SimilarResult(BaseModel):

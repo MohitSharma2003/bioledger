@@ -18,8 +18,11 @@ CREATE TABLE IF NOT EXISTS observations (
     note        TEXT,
     tags        TEXT[],
     season_note TEXT,
-    embedding   vector(768)
+    embedding   vector(768),
+    source      TEXT DEFAULT 'user'
 );
+
+ALTER TABLE observations ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'user';
 
 -- Time-series hypertable: every sighting is a point in time.
 SELECT create_hypertable('observations', 'created_at', if_not_exists => TRUE, migrate_data => TRUE);

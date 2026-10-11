@@ -2,13 +2,13 @@
 
 **An offline, open-weight naturalist field notebook.**
 
-Spend ten minutes outside. Come back and describe what you noticed — or drop in a photo.
+Spend ten minutes outside. Come back and describe what you noticed, or drop in a photo.
 A local open-weight model turns it into a structured sighting, remembers it, and slowly
 grows a personal biodiversity ledger you can question in plain language.
 
 No cloud. No API key. Your notes never leave your machine.
 
-Built for the **Hacktoberfest 2026 Open-Source AI Challenge — Week 1: Touch Grass.**
+Built for the **Hacktoberfest 2026 Open-Source AI Challenge, Week 1: Touch Grass.**
 
 ---
 
@@ -16,10 +16,10 @@ Built for the **Hacktoberfest 2026 Open-Source AI Challenge — Week 1: Touch Gr
 
 Most "touch grass" projects are wellness or screen-time trackers. Bioledger makes going
 outside **produce something durable**: a scientific record of your own patch of the world.
-The screen is the shortest part of the loop — you observe outside, then log once.
+The screen is the shortest part of the loop; you observe outside, then log once.
 
-And because the model runs locally on open weights, the private thing a naturalist keeps —
-*where* you were and *what you saw* — stays on your disk.
+And because the model runs locally on open weights, the private thing a naturalist keeps
+(*where* you were and *what you saw*) stays on your disk.
 
 ## How it works
 
@@ -55,7 +55,7 @@ uvicorn main:app --reload
 
 Open <http://localhost:8000>, type what you saw outside, and log it.
 
-Everything runs against your local Ollama. If Ollama is off, the app still runs — it
+Everything runs against your local Ollama. If Ollama is off, the app still runs, it
 just cannot write new notes until it is back.
 
 ## Optional: load a photo
@@ -136,9 +136,14 @@ static/          built UI (served by FastAPI; regenerate with `npm run build`)
 
 ## Front-end
 
-The interface is a small React app (Vite + Tailwind, shadcn-style primitives over Radix).
-It is built into `static/` and served by FastAPI, so the runtime is still one process and
-one port.
+The interface is a small React app (Vite + Tailwind, shadcn-style primitives over Radix). It
+is built into `static/` and served by FastAPI, so the runtime is still one process and one
+port. Typography uses Fraunces for display and species names, Manrope for text and controls,
+and IBM Plex Mono for dates and metadata.
+
+It is a five-page app with client-side routing (`/` new sighting, `/sightings`, `/ask`,
+`/ledger`, `/season`). FastAPI serves `index.html` for every non-API path, so direct links
+and reloads work.
 
 ```bash
 cd web
@@ -160,9 +165,9 @@ npm run dev       # http://127.0.0.1:5173 (proxies /api to :8001)
 ## Development timeline
 
 Bioledger was started and completed entirely within the Hacktoberfest 2026 Open-Source AI
-Challenge — Week 1 window (Oct 5–11, 2026). All commits in this repository fall inside that
+Challenge, Week 1 window (Oct 5-11, 2026). All commits in this repository fall inside that
 period; no work on this project predates the challenge.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

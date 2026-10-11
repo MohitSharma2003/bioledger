@@ -65,6 +65,7 @@ def seed(store, days_back: int = 10) -> int:
     for index, item in enumerate(DEMO_OBSERVATIONS):
         obs = dict(item)
         obs["created_at"] = (base - timedelta(days=index)).isoformat()
+        obs["source"] = "demo"
         store.add_observation(obs, None)
         added += 1
     return added

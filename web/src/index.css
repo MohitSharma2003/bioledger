@@ -60,13 +60,18 @@
     @apply border-b border-rule;
   }
 
-  .section-anchor {
-    scroll-margin-top: 5.5rem;
+  .display-title {
+    font-family: theme("fontFamily.serif");
+    font-weight: 400;
+    font-optical-sizing: auto;
+    color: theme("colors.forest");
+    letter-spacing: -0.02em;
+    font-variation-settings: "SOFT" 0, "WONK" 0;
   }
 
-  .display-title {
-    @apply font-serif font-normal text-forest;
-    letter-spacing: -0.015em;
+  .species-name {
+    @apply font-serif text-species text-forest;
+    font-weight: 500;
   }
 
   .nav-underline::after {
@@ -78,7 +83,7 @@
     transform-origin: left;
     transition: transform 0.2s ease;
   }
-  .nav-underline[data-active="true"]::after {
+  .nav-underline.is-active::after {
     transform: scaleX(1);
   }
 }

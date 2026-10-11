@@ -67,10 +67,16 @@ class SQLiteStore:
                     note TEXT,
                     tags TEXT,
                     season_note TEXT,
-                    embedding TEXT
+                    embedding TEXT,
+                    source TEXT DEFAULT 'user'
                 )
                 """
             )
+            columns = [row[1] for row in con.execute("PRAGMA table_info(observations)")]
+            if "source" not in columns:
+                con.execute(
+                    "ALTER TABLE observations ADD COLUMN source TEXT DEFAULT 'user'"
+                )
 
     @staticmethod
     def _row(row) -> dict:
@@ -85,8 +91,8 @@ class SQLiteStore:
                 """
                 INSERT INTO observations
                 (created_at, text, place, lat, lon, species, common_name, category,
-                 confidence, note, tags, season_note, embedding)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 confidence, note, tags, season_note, embedding, source)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     obs.get("created_at") or now_iso(),
@@ -102,6 +108,7 @@ class SQLiteStore:
                     json.dumps(obs.get("tags") or []),
                     obs.get("season_note"),
                     json.dumps(embedding) if embedding else None,
+                    obs.get("source") or "user",
                 ),
             )
             return cur.lastrowid
@@ -279,8 +286,8 @@ class PostgresStore:
                 """
                 INSERT INTO observations
                 (created_at, text, place, lat, lon, species, common_name, category,
-                 confidence, note, tags, season_note, embedding)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector)
+                 confidence, note, tags, season_note, embedding, source)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s)
                 RETURNING id
                 """,
                 (
@@ -297,6 +304,7 @@ class PostgresStore:
                     obs.get("tags") or [],
                     obs.get("season_note"),
                     self._vec(embedding),
+                    obs.get("source") or "user",
                 ),
             ).fetchone()
             return row["id"]

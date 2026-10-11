@@ -1,6 +1,5 @@
-import { ChevronRight, Database, Search } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 import { CategoryDot, EmptyState } from "./bits";
 import { formatDate, titleCase } from "../lib/format";
 import { cn } from "../lib/utils";
@@ -15,8 +14,7 @@ export function Sightings({
   onCategory,
   total,
   onOpen,
-  onSeed,
-  seeding,
+  loading = false,
 }: {
   observations: Observation[];
   categories: CategoryCount[];
@@ -26,8 +24,7 @@ export function Sightings({
   onCategory: (v: string) => void;
   total: number;
   onOpen: (id: number) => void;
-  onSeed: () => void;
-  seeding: boolean;
+  loading?: boolean;
 }) {
   const allCount = categories.reduce((sum, c) => sum + c.count, 0);
 
@@ -69,7 +66,11 @@ export function Sightings({
         ))}
       </div>
 
-      {observations.length ? (
+      {loading ? (
+        <p className="rounded-sm border border-rule bg-paper-raised px-5 py-8 text-center text-[0.9rem] text-muted">
+          Loading records...
+        </p>
+      ) : observations.length ? (
         <ul className="overflow-hidden rounded-sm border border-rule bg-paper-raised">
           {observations.map((o) => (
             <li key={o.id} className="border-b border-rule last:border-0">
@@ -83,8 +84,15 @@ export function Sightings({
                 </span>
                 <CategoryDot category={o.category} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-serif text-[1.05rem] text-forest">
-                    {o.species}
+                  <span className="flex items-center gap-2">
+                    <span className="truncate font-serif text-[1.05rem] text-forest">
+                      {o.species}
+                    </span>
+                    {o.source === "demo" ? (
+                      <span className="shrink-0 rounded-full border border-ochre/50 px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-[0.08em] text-ochre">
+                        sample
+                      </span>
+                    ) : null}
                   </span>
                   {o.place ? (
                     <span className="block truncate text-[0.8rem] text-muted">
@@ -101,18 +109,10 @@ export function Sightings({
           ))}
         </ul>
       ) : (
-        <EmptyState className="flex flex-col items-center gap-4">
-          <span>
-            {q || category
-              ? "No sightings match that search."
-              : "The ledger is empty."}
-          </span>
-          {!q && !category ? (
-            <Button variant="outline" size="sm" onClick={onSeed} disabled={seeding}>
-              <Database size={15} />
-              {seeding ? "Loading..." : "Load a sample week"}
-            </Button>
-          ) : null}
+        <EmptyState>
+          {q || category
+            ? "No sightings match that search."
+            : "The ledger is empty. Record your first sighting to start filling it in."}
         </EmptyState>
       )}
     </div>

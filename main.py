@@ -85,9 +85,9 @@ def observe(
     except llm.LLMError as exc:
         ai_processed = False
         notice = (
-            "Saved to your ledger. The local model could not read it just now "
-            f"({exc}). Your note and photo are safe \u2014 start Ollama and log it again "
-            "to get a full field note."
+            "Saved to your ledger, but the local model could not read it just now "
+            f"({exc}). Start Ollama and record the sighting again to get an "
+            "identification for it."
         )
         parsed = {
             "species": "unidentified sighting",
@@ -105,6 +105,7 @@ def observe(
         "place": place or None,
         "lat": lat,
         "lon": lon,
+        "source": "user",
         **parsed,
     }
     embedding = llm.embed(f"{obs['species']} {obs['note']} {obs['text']}".strip()) if ai_processed else None
@@ -131,13 +132,15 @@ def ask(body: AskIn) -> AskOut:
     if not text:
         return AskOut(
             answer=(
-                "I could not reach the local model just now. Your journal is still safe on disk — "
-                "start Ollama and try again."
+                "I could not reach the local model just now. Your journal is still "
+                "safe on disk; start Ollama and try again."
             ),
             sources=[],
             mode="offline",
         )
-    sources = [Observation(**row) for row in store.list_observations(limit=5)]
+    # These are the same recent records the model was given as context, not a
+    # separate retrieval result. The UI labels them accordingly.
+    sources = [Observation(**row) for row in store.list_observations(limit=40)]
     return AskOut(answer=text, sources=sources, mode="model")
 
 
@@ -175,7 +178,8 @@ def stats() -> Stats:
 
 @app.get("/api/season")
 def season(month: Optional[int] = None) -> dict:
-    return {"species": _store().species_in_season(month)}
+    resolved = month or store_module.datetime.now(store_module.timezone.utc).month
+    return {"month": resolved, "species": _store().species_in_season(month)}
 
 
 @app.get("/api/timeline")
@@ -197,3 +201,19 @@ def index() -> FileResponse:
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/{full_path:path}")
+def spa(full_path: str) -> FileResponse:
+    """Serve the single-page app for client-side routes.
+
+    Recognised API and asset prefixes are kept out of this catch-all so they
+    still return a normal 404 instead of the app shell.
+    """
+    if full_path.startswith(("api/", "static/")):
+        raise HTTPException(status_code=404, detail="Not found")
+    if full_path:
+        candidate = os.path.abspath(os.path.join(STATIC_DIR, full_path))
+        if candidate.startswith(os.path.abspath(STATIC_DIR)) and os.path.isfile(candidate):
+            return FileResponse(candidate)
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
