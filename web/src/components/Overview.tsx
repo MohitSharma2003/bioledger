@@ -21,17 +21,17 @@ export function Overview({
       <div className="grid gap-10 lg:grid-cols-[1.55fr_1fr] lg:gap-16">
         <div>
           <p className="eyebrow mb-4 flex items-center gap-2">
-            <Sprout size={14} /> A local-first nature journal
+            <Sprout size={14} /> Offline nature journal
           </p>
           <h1 className="display-title text-[2.9rem] leading-[1.02] sm:text-[4.5rem]">
-            Notice the world
+            Write down what you
             <br />
-            one sighting at a time.
+            find outside.
           </h1>
           <p className="mt-6 max-w-xl font-serif text-[1.2rem] leading-relaxed text-forest/90 sm:text-[1.3rem]">
-            Bioledger turns a few plain words into a proper field note &mdash;
-            identification, confidence, and what else is flowering nearby
-            &mdash; written by an open-weight model running on your own machine.
+            Type a few words about a sighting and Bioledger turns it into a
+            structured field note: species, confidence, tags, and what else is
+            around. The model runs locally, so it keeps working with no internet.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button size="lg" onClick={() => scrollTo("new-sighting")}>
@@ -75,8 +75,8 @@ export function Overview({
             </div>
           </div>
           <p className="mt-6 border-t border-rule pt-4 font-serif text-[0.95rem] italic leading-relaxed text-muted">
-            Everything here lives in a file on this computer. No account, no
-            cloud, no trailing gaze.
+            Everything is stored in a local file on this computer. No account,
+            no cloud.
           </p>
         </aside>
       </div>

@@ -18,9 +18,9 @@ export function AiBanner({
       >
         <WifiOff size={18} className="mt-0.5 shrink-0 text-ochre" />
         <p className="text-[0.9rem] leading-relaxed">
-          <span className="font-medium">{notice}</span> Your words are still
-          saved to the ledger — the model will fill in the identification the
-          next time it is reachable.
+          <span className="font-medium">{notice}</span> Your entry is still saved
+          to the ledger. The model will fill in the identification when it is
+          reachable again.
         </p>
       </div>
     );
@@ -36,7 +36,7 @@ export function AiBanner({
         <p className="text-[0.9rem] leading-relaxed">
           <span className="font-medium">The local model is not reachable.</span>{" "}
           Start Ollama with <code className="font-mono text-[0.82rem]">ollama serve</code>{" "}
-          and pull a model, or keep writing — notes are saved either way.
+          and pull a model, or keep writing. Notes are saved either way.
         </p>
       </div>
     );
@@ -48,7 +48,7 @@ export function AiBanner({
         <Sparkles size={18} className="mt-0.5 shrink-0 text-moss" />
         <p className="text-[0.9rem] leading-relaxed">
           <span className="font-medium">{health?.model}</span> is running
-          locally through Ollama. Nothing you write leaves this machine.
+          locally through Ollama. Entries stay on this machine.
         </p>
       </div>
     );

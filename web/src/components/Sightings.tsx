@@ -42,7 +42,7 @@ export function Sightings({
           <Input
             value={q}
             onChange={(e) => onQ(e.target.value)}
-            placeholder="Search species, notes, places…"
+            placeholder="Search species, notes, places"
             className="pl-10"
             aria-label="Search sightings"
           />
@@ -110,7 +110,7 @@ export function Sightings({
           {!q && !category ? (
             <Button variant="outline" size="sm" onClick={onSeed} disabled={seeding}>
               <Database size={15} />
-              {seeding ? "Loading…" : "Load a sample week"}
+              {seeding ? "Loading..." : "Load a sample week"}
             </Button>
           ) : null}
         </EmptyState>

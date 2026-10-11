@@ -133,7 +133,7 @@ export function NewSighting({
           <Button type="submit" size="lg" disabled={submitting || !text.trim()}>
             {submitting ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Writing the note…
+                <Loader2 size={16} className="animate-spin" /> Writing the note...
               </>
             ) : (
               <>
@@ -142,7 +142,7 @@ export function NewSighting({
             )}
           </Button>
           <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-muted">
-            {modelReady ? "model ready" : "saved offline-safe"}
+            {modelReady ? "model ready" : "saved offline"}
           </span>
         </div>
       </form>
@@ -160,8 +160,8 @@ export function NewSighting({
           <EmptyState className="flex h-full min-h-[340px] flex-col items-center justify-center gap-3">
             <NotebookPen size={26} className="text-moss/70" />
             <span>
-              Your field note appears here &mdash; identification, confidence,
-              and neighbours from the ledger.
+              Your field note appears here: identification, confidence, and
+              similar records from the ledger.
             </span>
           </EmptyState>
         )}

@@ -64,7 +64,7 @@ export function Specimen({
           <span className="text-muted/80"> · {formatTime(o.created_at)}</span>
         </Meta>
         <Meta icon={<MapPin size={13} />} label="Place">
-          {o.place || "—"}
+          {o.place || "not recorded"}
         </Meta>
         <Meta icon={<Leaf size={13} />} label="Season">
           {seasonOf(o.created_at)}

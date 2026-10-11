@@ -69,7 +69,7 @@ export function AskJournal({
           </p>
           {sources.length ? (
             <div className="mt-5 border-t border-rule pt-4">
-              <p className="field-label mb-3">Drawn from</p>
+              <p className="field-label mb-3">Based on</p>
               <ul className="space-y-1.5">
                 {sources.slice(0, 4).map((s) => (
                   <li key={s.id}>

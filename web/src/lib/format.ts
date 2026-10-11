@@ -24,7 +24,7 @@ export function formatTime(iso: string): string {
 /** Meteorological season for the northern hemisphere. */
 export function seasonOf(iso: string): string {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "n/a";
   const m = d.getMonth();
   if (m <= 1 || m === 11) return "winter";
   if (m <= 4) return "spring";

@@ -111,9 +111,9 @@ export default function App() {
 
         <Section
           id="new-sighting"
-          index="01 — record"
+          index="01"
           title="New sighting"
-          description="Describe what you saw in your own words. An open-weight model reads it and drafts the field note."
+          description="Type what you saw. The local model turns it into a structured field note."
         >
           <NewSighting
             modelReady={modelReady}
@@ -124,36 +124,36 @@ export default function App() {
 
         <Section
           id="ask"
-          index="02 — query"
+          index="02"
           title="Ask the journal"
-          description="Search your own notebook in plain language. Answers are grounded in the sightings you recorded."
+          description="Ask questions about your own sightings. Answers come from the records you saved."
         >
           <AskJournal onOpenSource={setSelectedId} />
         </Section>
 
         <Section
           id="ledger"
-          index="03 — measure"
+          index="03"
           title="My ledger"
-          description="The shape of your noticing over time — totals, streaks, and the last thirty days."
+          description="Totals, streaks, and the last thirty days of sightings."
         >
           <Ledger stats={stats} timeline={timeline} />
         </Section>
 
         <Section
           id="season"
-          index="04 — context"
+          index="04"
           title="In season"
-          description="What is active around you this week, drawn from the notes already in the ledger."
+          description="What you have logged in the past week."
         >
           <InSeason season={season} onSeed={seed} seeding={seeding} />
         </Section>
 
         <Section
           id="sightings"
-          index="05 — browse"
+          index="05"
           title="Sightings"
-          description="Every record in the ledger. Search by name, note, or place, or filter by category."
+          description="All records. Search by name, note, or place, or filter by category."
         >
           <Sightings
             observations={observations}
@@ -172,7 +172,7 @@ export default function App() {
 
       <footer className="shell border-t border-rule py-8">
         <p className="font-mono text-[0.68rem] uppercase tracking-[0.1em] text-muted">
-          Bioledger · local-first field notebook · open-weight model via Ollama
+          Bioledger · local field journal · runs on Ollama
         </p>
       </footer>
 

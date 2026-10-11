@@ -21,7 +21,7 @@ export function InSeason({
           disabled={seeding}
           className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-moss underline-offset-4 hover:underline disabled:opacity-50"
         >
-          {seeding ? "loading…" : "load sample week"}
+          {seeding ? "loading..." : "load sample week"}
         </button>
       </div>
 
@@ -48,8 +48,8 @@ export function InSeason({
         </ul>
       ) : (
         <EmptyState>
-          Nothing logged in the last seven days yet — the season list fills in
-          as you record sightings.
+          Nothing logged in the last seven days yet. This list fills in as you
+          record sightings.
         </EmptyState>
       )}
     </div>

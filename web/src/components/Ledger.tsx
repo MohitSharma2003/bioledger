@@ -46,7 +46,7 @@ export function Ledger({
                 key={d.date}
                 className="group relative flex-1 rounded-t-[2px] bg-olive/70 transition-colors hover:bg-ochre"
                 style={{ height: `${Math.max(3, (d.count / max) * 100)}%` }}
-                title={`${formatDayLabel(d.date)} — ${d.count}`}
+                title={`${formatDayLabel(d.date)}: ${d.count}`}
               >
                 {i % 6 === 0 || i === timeline.length - 1 ? (
                   <span className="absolute -bottom-6 left-0 font-mono text-[0.6rem] text-muted">
@@ -57,7 +57,7 @@ export function Ledger({
             ))}
           </div>
         ) : (
-          <EmptyState>No sightings yet — record one above.</EmptyState>
+          <EmptyState>No sightings yet. Record one above.</EmptyState>
         )}
       </div>
 

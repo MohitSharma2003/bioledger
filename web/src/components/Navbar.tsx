@@ -30,7 +30,7 @@ function StatusPill({
       title={
         health
           ? `Ollama ${health.ollama ? "up" : "down"} · ${health.model}`
-          : "Checking local model…"
+          : "Checking model..."
       }
     >
       <span className={cn("h-2 w-2 rounded-full", dot)} />
