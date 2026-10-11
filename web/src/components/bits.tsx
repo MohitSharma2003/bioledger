@@ -47,6 +47,7 @@ export function PageHeader({
   title,
   titleClassName,
   lead,
+  leadClassName,
   actions,
 }: {
   eyebrow?: string;
@@ -54,6 +55,7 @@ export function PageHeader({
   title: string;
   titleClassName?: string;
   lead?: string;
+  leadClassName?: string;
   actions?: ReactNode;
 }) {
   return (
@@ -66,7 +68,11 @@ export function PageHeader({
           <h1 className={cn("display-title", titleClassName ?? "text-page-title")}>
             {title}
           </h1>
-          {lead ? <p className="mt-3 text-lead text-muted">{lead}</p> : null}
+          {lead ? (
+            <p className={cn("mt-3 text-muted", leadClassName ?? "text-lead")}>
+              {lead}
+            </p>
+          ) : null}
         </div>
         {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
       </div>

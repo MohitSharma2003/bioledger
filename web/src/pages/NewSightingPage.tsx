@@ -42,8 +42,9 @@ export function NewSightingPage() {
         eyebrow="Field notebook"
         eyebrowClassName="text-4xl sm:text-5xl"
         title="Write down what you find outside."
-        titleClassName="text-[1.9rem] sm:text-[2.4rem]"
+        titleClassName="font-sans text-2xl font-bold sm:text-3xl"
         lead="Type a few words about a sighting. The local model turns it into a structured field note: species, confidence, tags, and what else is around. It runs on your machine, so it keeps working with no internet."
+        leadClassName="text-[0.95rem] leading-relaxed"
         actions={<LedgerGlance stats={stats} />}
       />
 
