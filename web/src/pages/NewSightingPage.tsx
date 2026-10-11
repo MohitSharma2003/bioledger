@@ -43,7 +43,7 @@ export function NewSightingPage() {
         eyebrowClassName="mt-2 mb-12 text-4xl sm:mb-16 sm:text-5xl"
         title="Write down what you find outside."
         lead="Type a few words about a sighting. The local model turns it into a structured field note: species, confidence, tags, and what else is around. It runs on your machine, so it keeps working with no internet."
-        leadClassName="max-w-2xl text-sm leading-relaxed"
+        leadClassName="max-w-2xl text-[0.95rem] leading-relaxed"
         actions={<LedgerGlance stats={stats} />}
       />
 
@@ -75,8 +75,8 @@ export function NewSightingPage() {
 function LedgerGlance({ stats }: { stats: Stats | null }) {
   return (
     <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-5 py-4 shadow-specimen sm:w-auto">
-      <p className="field-label mb-3">Your ledger</p>
-      <div className="flex items-end gap-7">
+      <p className="field-label mb-3 text-[0.78rem]">Your ledger</p>
+      <div className="flex items-end gap-8">
         <Glance value={stats?.total ?? 0} label="sightings" tone="text-forest" />
         <Glance value={stats?.species ?? 0} label="species" tone="text-moss" />
         <Glance
@@ -100,8 +100,8 @@ function Glance({
 }) {
   return (
     <div>
-      <div className={cn("font-serif text-5xl leading-none", tone)}>{value}</div>
-      <div className="mt-1.5 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-muted">
+      <div className={cn("font-serif text-6xl leading-none", tone)}>{value}</div>
+      <div className="mt-1.5 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-muted">
         {label}
       </div>
     </div>
