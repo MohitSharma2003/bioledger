@@ -43,11 +43,13 @@ export function CategoryDot({
 
 export function PageHeader({
   eyebrow,
+  eyebrowLarge = false,
   title,
   lead,
   actions,
 }: {
   eyebrow?: string;
+  eyebrowLarge?: boolean;
   title: string;
   lead?: string;
   actions?: ReactNode;
@@ -56,7 +58,11 @@ export function PageHeader({
     <header className="mb-8 border-b border-rule pb-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
+          {eyebrow ? (
+            <p className={cn("eyebrow mb-2", eyebrowLarge && "text-2xl sm:text-3xl")}>
+              {eyebrow}
+            </p>
+          ) : null}
           <h1 className="display-title text-page-title">{title}</h1>
           {lead ? <p className="mt-3 text-lead text-muted">{lead}</p> : null}
         </div>

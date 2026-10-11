@@ -65,9 +65,6 @@ export function Navbar({
             <span className="font-serif text-[1.35rem] tracking-tight">
               Bioledger
             </span>
-            <span className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-moss">
-              field notebook
-            </span>
           </span>
         </Link>
 

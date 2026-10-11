@@ -63,7 +63,7 @@ export function NewSighting({
         <div>
           <label
             htmlFor="text"
-            className="mb-3 block font-sans text-xl font-semibold leading-snug text-forest sm:text-2xl"
+            className="field-label mb-3 block text-xl sm:text-2xl"
           >
             What did you notice?
           </label>

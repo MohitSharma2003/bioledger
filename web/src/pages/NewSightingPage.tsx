@@ -40,41 +40,22 @@ export function NewSightingPage() {
     <>
       <PageHeader
         eyebrow="Field notebook"
+        eyebrowLarge
         title="Write down what you find outside."
         lead="Type a few words about a sighting. The local model turns it into a structured field note: species, confidence, tags, and what else is around. It runs on your machine, so it keeps working with no internet."
+        actions={<LedgerGlance stats={stats} />}
       />
 
-      <div className="mb-8 flex flex-col gap-6 border-b border-rule pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-wrap gap-3">
-          <Button size="lg" onClick={focusForm}>
-            <NotebookPen size={16} /> Log a sighting
-          </Button>
-          <Link
-            to="/ask"
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-          >
-            <MessageCircleQuestion size={16} /> Ask the journal
-          </Link>
-        </div>
-
-        <div className="flex items-end gap-8">
-          <div>
-            <div className="font-serif text-4xl leading-none text-forest">
-              {stats?.total ?? 0}
-            </div>
-            <div className="mt-1.5 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-muted">
-              sightings
-            </div>
-          </div>
-          <div>
-            <div className="font-serif text-4xl leading-none text-moss">
-              {stats?.species ?? 0}
-            </div>
-            <div className="mt-1.5 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-muted">
-              species
-            </div>
-          </div>
-        </div>
+      <div className="mb-7 flex flex-wrap gap-3">
+        <Button size="lg" onClick={focusForm}>
+          <NotebookPen size={16} /> Log a sighting
+        </Button>
+        <Link
+          to="/ask"
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+        >
+          <MessageCircleQuestion size={16} /> Ask the journal
+        </Link>
       </div>
 
       <div className="mb-8">
@@ -87,5 +68,41 @@ export function NewSightingPage() {
         onLogged={refreshStats}
       />
     </>
+  );
+}
+
+function LedgerGlance({ stats }: { stats: Stats | null }) {
+  return (
+    <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-5 py-4 shadow-specimen sm:w-auto">
+      <p className="field-label mb-3">Your ledger</p>
+      <div className="flex items-end gap-7">
+        <Glance value={stats?.total ?? 0} label="sightings" tone="text-forest" />
+        <Glance value={stats?.species ?? 0} label="species" tone="text-moss" />
+        <Glance
+          value={stats?.this_week ?? 0}
+          label="this week"
+          tone="text-ochre"
+        />
+      </div>
+    </aside>
+  );
+}
+
+function Glance({
+  value,
+  label,
+  tone,
+}: {
+  value: number;
+  label: string;
+  tone: string;
+}) {
+  return (
+    <div>
+      <div className={cn("font-serif text-5xl leading-none", tone)}>{value}</div>
+      <div className="mt-1.5 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-muted">
+        {label}
+      </div>
+    </div>
   );
 }
