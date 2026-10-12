@@ -1,173 +1,235 @@
-# Bioledger
+# Bioledger 🌿
 
-**An offline, open-weight naturalist field notebook.**
+**An offline-first field notebook for naturalists.**
 
-Spend ten minutes outside. Come back and describe what you noticed, or drop in a photo.
-A local open-weight model turns it into a structured sighting, remembers it, and slowly
-grows a personal biodiversity ledger you can question in plain language.
+Bioledger helps you record wildlife sightings, organize observations, and explore your field journal with AI. It's designed for people who want to spend more time outdoors and less time dealing with complicated tools.
 
-No cloud. No API key. Your notes never leave your machine.
-
-Built for the **Hacktoberfest 2026 Open-Source AI Challenge, Week 1: Touch Grass.**
+🌐 **Live Demo:** https://bioledger.onrender.com  
+📦 **Repository:** https://github.com/MohitSharma2003/bioledger
 
 ---
 
-## Why it is different
+## 🌱 Why Bioledger?
 
-Most "touch grass" projects are wellness or screen-time trackers. Bioledger makes going
-outside **produce something durable**: a scientific record of your own patch of the world.
-The screen is the shortest part of the loop; you observe outside, then log once.
+Field observations often happen in places with limited or no internet connectivity. Bioledger aims to make recording and organizing those observations simple, with local AI as an optional assistant.
 
-And because the model runs locally on open weights, the private thing a naturalist keeps
-(*where* you were and *what you saw*) stays on your disk.
+- **Field Notes:** Record wildlife sightings and observations.
+- **AI-Assisted Observations:** Turn natural-language descriptions into structured field notes.
+- **Ask Your Journal:** Ask questions about your recorded observations.
+- **Offline-First Design:** Work toward keeping your notes available without a network connection.
+- **Local AI:** Use a compatible model running on your own device instead of depending entirely on a cloud AI service.
+- **Privacy-Focused:** Local inference can keep prompts and observations on your device when the application is configured to use local processing and storage.
 
-## How it works
+## 🧠 How the AI Works
 
-```
-Browser UI ──▶ FastAPI ──▶ local Gemma (Ollama)  ──▶ structured sighting + note
-                   │                 │
-                   │                 └──▶ nomic-embed-text  ──▶ embedding
-                   │
-                   └──▶ store ──┬── SQLite (default, fully offline)
-                                └── TimescaleDB + pgvector (scalable twin)
-                                       • hypertable of sightings
-                                       • continuous aggregate = "in season"
-                                       • pgvector = "find similar sightings"
-```
+Bioledger is designed to support two AI approaches.
 
-- **Open-weight model** (default `gemma3:4b`) writes each field note and answers questions.
-- **Local embeddings** (`nomic-embed-text`) power "find similar sightings".
-- **Two interchangeable stores:** a zero-setup SQLite file, or TimescaleDB + pgvector for
-  real time-series and vector search. Same code, chosen by `DATABASE_URL`.
-- **MCP server** lets any AI agent query your ledger.
+### 1. Browser-Local AI — For the Public Website
 
-## Quickstart (zero-setup, fully offline)
+When Bioledger is deployed on Render, each visitor can run a compatible AI model directly in their browser.
+
+The intended workflow is:
+
+1. Open Bioledger in a compatible browser.
+2. Choose a supported browser-local model.
+3. Download the model files while connected to the internet.
+4. Load the model and use AI-assisted features.
+5. Reuse cached resources for offline operation when supported.
+
+The model runs on the visitor's device rather than on Bioledger's hosting server. Performance depends on the model, available memory, browser capabilities, and hardware acceleration.
+
+**Important:** Browser-local inference requires a compatible model and runtime. WebGPU support, available memory, model downloads, and browser storage can affect whether it works. Offline operation also requires the necessary application and model resources to be available locally.
+
+### 2. Ollama — For Local Development and Self-Hosting
+
+Bioledger can also use a locally running Ollama service where the backend and Ollama are configured to communicate.
+
+For example, a developer can install Ollama and download a compatible model:
 
 ```bash
-# 1. Get the models (once)
 ollama pull gemma3:4b
-ollama pull nomic-embed-text
+ollama serve
+```
 
-# 2. Install and run
+The model must be available in the local Ollama installation, and the application must be configured to use the correct endpoint.
+
+A public website hosted over HTTPS cannot automatically access an Ollama server running on a visitor's computer. Browser security restrictions, CORS, mixed-content policies, and local network permissions may prevent the connection.
+
+Do not expose an unauthenticated Ollama endpoint directly to the public internet.
+
+## 🏗️ Architecture
+
+The intended architecture separates the application from the AI runtime.
+
+```text
+                         Bioledger
+                             |
+                  +----------+----------+
+                  |                     |
+             Public Website       Self-Hosted App
+                  |                     |
+          Browser-Local AI           Ollama
+                  |                     |
+          User's Own Device       Local AI Model
+```
+
+Browser-local inference and Ollama are separate execution options. Their availability depends on the deployed configuration and the models supported by each runtime.
+
+## 🛠️ Technology Stack
+
+The project uses a web application architecture with the following technologies:
+
+- **Frontend:** React, TypeScript, Vite
+- **Backend:** Python, FastAPI
+- **Local AI:** Ollama and/or a compatible browser-local inference runtime
+- **Browser Acceleration:** WebGPU where supported
+- **Deployment:** Render
+
+See the project source and dependency files for the exact versions and current implementation details.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Install the following tools:
+
+- Git
+- Python
+- Node.js and npm
+- Ollama, if you want to use the Ollama provider
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/MohitSharma2003/bioledger.git
+cd bioledger
+```
+
+### 2. Set up the backend
+
+Create and activate a Python virtual environment.
+
+**Windows PowerShell:**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Install the backend dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Start the backend:
+
+```bash
 uvicorn main:app --reload
 ```
 
-Open <http://localhost:8000>, type what you saw outside, and log it.
+The backend will normally be available at:
 
-Everything runs against your local Ollama. If Ollama is off, the app still runs, it
-just cannot write new notes until it is back.
+http://127.0.0.1:8000
 
-## Optional: load a photo
+### 3. Set up the frontend
 
-`gemma3:4b` is multimodal, so you can attach a photo and the model reads it on-device.
-Prefer a tiny dedicated vision model? Pull `moondream` and set
-`BIOLEDGER_VISION_MODEL=moondream`.
-
-Photos are previewed before you submit, can be removed or replaced, and are validated for
-type and size (10 MB by default) before upload.
-
-## Using the journal
-
-- **Structured field notes.** Every submission is turned into a specimen record: suggested
-  subject, category, confidence, tags, the model's interpretation, date, and locality.
-- **Honest uncertainty.** When confidence is low or no species could be named, the record
-  says so plainly instead of inventing a name.
-- **Search and filter.** Search the whole ledger by species, note, place, or tag, and filter
-  by category. Open any entry to read its full record.
-- **Never lose a note.** The raw observation is written to the database *before* the model
-  is called. If Ollama is unavailable, the sighting is still saved and the UI explains what
-  happened rather than silently dropping it.
-- **Offline-first status.** The masthead shows the true model/backend state, and previously
-  saved sightings stay readable and searchable with the model switched off.
-
-## The scalable path: TimescaleDB + pgvector (Tiger Cloud)
-
-Set a Postgres connection string and Bioledger switches stores automatically:
-
-```bash
-export DATABASE_URL="postgres://user:pass@host:port/db?sslmode=require"
-```
-
-On startup it applies [`db/schema.sql`](db/schema.sql), which creates:
-
-- a **hypertable** keyed on time (every sighting is a time-series point),
-- a **continuous aggregate** (`obs_weekly`) that keeps "what is in season" fresh, and
-- a **pgvector** column + HNSW index for nearest-neighbour sighting search.
-
-To run the same thing locally, `docker compose up` (requires Docker).
-
-## MCP server
-
-```bash
-pip install mcp
-python mcp_server.py
-```
-
-Exposes tools (`ledger_query`, `in_season`, `similar_sightings`, `journal_stats`) over
-stdio so an agent can reason over your journal.
-
-## Configuration
-
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `OLLAMA_HOST` | `http://127.0.0.1:11434` | Where Ollama is listening |
-| `BIOLEDGER_MODEL` | `gemma3:4b` | Main open-weight model |
-| `BIOLEDGER_EMBED_MODEL` | `nomic-embed-text` | Embedding model |
-| `BIOLEDGER_VISION_MODEL` | `gemma3:4b` | Model used when a photo is attached |
-| `BIOLEDGER_DB` | `./bioledger.db` | SQLite file (default store) |
-| `DATABASE_URL` | *(unset)* | Postgres/Tiger Cloud URL (overrides SQLite) |
-| `BIOLEDGER_TIMEOUT` | `180` | Per-request Ollama timeout (seconds) |
-
-## Project layout
-
-```
-config.py        settings + env vars
-llm.py           Ollama client: parse, embed, vision, answer
-store.py         SQLite store + TimescaleDB/pgvector store
-schemas.py       request/response models
-seed.py          demo sightings
-main.py          FastAPI app and routes
-mcp_server.py    MCP stdio server
-db/schema.sql    hypertable + continuous aggregate + pgvector
-web/             React + Vite + Tailwind source for the UI
-static/          built UI (served by FastAPI; regenerate with `npm run build`)
-```
-
-## Front-end
-
-The interface is a small React app (Vite + Tailwind, shadcn-style primitives over Radix). It
-is built into `static/` and served by FastAPI, so the runtime is still one process and one
-port. Typography uses Fraunces for display and species names, Manrope for text and controls,
-and IBM Plex Mono for dates and metadata.
-
-It is a five-page app with client-side routing (`/` new sighting, `/sightings`, `/ask`,
-`/ledger`, `/season`). FastAPI serves `index.html` for every non-API path, so direct links
-and reloads work.
+Open a second terminal:
 
 ```bash
 cd web
 npm install
-npm run build     # writes to ../static
-# or, for live development against the API:
-npm run dev       # http://127.0.0.1:5173 (proxies /api to :8001)
+npm run dev
 ```
 
-## Why open innovation matters here
+Open the local development URL printed by Vite in your terminal.
 
-- **Runs offline on a laptop.** A 4B open-weight model is enough for a well-scoped task,
-  so the whole app works with no internet and no per-call cost.
-- **Private by default.** A naturalist's locations and sightings are sensitive; keeping
-  the model and the database local means they are never uploaded.
-- **Yours to change.** Swap the model with one env var, audit the prompt, fork the schema.
-  Nothing depends on one vendor's API staying online or cheap.
+If the frontend uses a configurable API base URL, configure it according to the project's current environment-variable conventions.
 
-## Development timeline
+### 4. Configure Ollama (Optional)
 
-Bioledger was started and completed entirely within the Hacktoberfest 2026 Open-Source AI
-Challenge, Week 1 window (Oct 5-11, 2026). All commits in this repository fall inside that
-period; no work on this project predates the challenge.
+If using Ollama, make sure the service is running and the required model has been downloaded:
 
-## License
+```bash
+ollama pull gemma3:4b
+ollama serve
+```
 
-MIT, see [LICENSE](LICENSE).
+Configure Bioledger's backend to use the correct Ollama endpoint. Check the project's configuration and environment variables for the expected setting.
+
+Browser-local AI does not require the visitor to install Ollama, provided the browser model implementation is available and configured correctly.
+
+## 🌐 Deployment
+
+Bioledger's public demo is hosted on Render:
+
+https://bioledger.onrender.com
+
+When deploying a new version:
+
+1. Commit and push the intended application changes.
+2. Verify that the Render build installs all required dependencies.
+3. Ensure the frontend is built and the deployed backend serves the correct frontend assets, if using a combined deployment.
+4. Configure persistent storage if observations or photos must survive server restarts and redeployments.
+5. Verify that the deployed application exposes the intended AI providers.
+6. Test the deployed application in a browser, including model loading, observation creation, journal questions, and offline behavior.
+
+### Public Deployment Considerations
+
+- Do not assume the public Render instance can use Ollama installed on a developer's computer.
+- Do not expose private API keys or service-role credentials in frontend code.
+- Avoid claiming that all data stays on-device unless network requests, storage, and inference paths have been verified.
+- Free hosting environments may have ephemeral filesystems. Confirm the storage configuration before relying on server-side persistence.
+
+## 🔒 Privacy and Offline Use
+
+Bioledger is intended to support local-first field recording.
+
+For genuinely offline and privacy-preserving operation, the application needs to ensure that:
+
+- Notes are stored locally when offline use is required.
+- The selected AI model and its dependencies are downloaded and cached.
+- AI inference happens in the intended local runtime.
+- The application does not silently send observations or prompts to a remote AI service.
+- Any optional synchronization is explicit and clearly explained.
+
+Browser caching can be cleared or evicted by the browser. Users should not treat cached browser storage as a guaranteed backup.
+
+## 🧪 Testing
+
+Before relying on Bioledger in the field, test these scenarios:
+
+- Create and save an observation.
+- Reload the application and confirm the observation remains available.
+- Load the selected AI model and create a structured field note.
+- Ask a question about previously recorded observations.
+- Disconnect the internet and repeat supported workflows.
+- Confirm the expected behavior when a model is unavailable or unsupported.
+- Verify that no unintended network requests contain private observations.
+
+## 🗺️ Roadmap
+
+- [ ] Reliable offline observation storage
+- [ ] Browser-local AI model selection and lifecycle management
+- [ ] Ollama support for local and self-hosted deployments
+- [ ] Better wildlife observation organization
+- [ ] Photo-assisted observation workflows
+- [ ] Optional data export and backup
+- [ ] Improved installable PWA experience
+
+## 🤝 Contributing
+
+Contributions, bug reports, and suggestions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes and test them.
+4. Open a pull request describing the changes.
+
+## 📄 License
+
+Check the repository for the current license and its terms before redistributing or modifying the project.
+
+---
+
+**Bioledger — Observe nature. Record what you find. Keep your field notes close.**
