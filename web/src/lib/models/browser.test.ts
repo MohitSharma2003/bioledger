@@ -116,16 +116,40 @@ describe("browser runtime status", () => {
   });
 });
 
-describe("failure isolation", () => {
-  it("a failed download leaves the desktop model working", async () => {
-    hf.AutoProcessor.from_pretrained.mockRejectedValue(new Error("network down"));
+describe("browser model download management", () => {
+  it("remembers each model's cached state separately", async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+      setItem: (key: string, value: string) => void store.set(key, String(value)),
+      removeItem: (key: string) => void store.delete(key),
+    });
 
-    await expect(browserProvider.ensureReady("m", {})).rejects.toThrow(/network down/);
-    expect((await browserProvider.status("m")).kind).toBe("error");
+    await browserProvider.ensureReady("m", {});
+    browserProvider.release();
 
-    // The default path is untouched by the optional model's failure.
-    const ollama = await ollamaProvider.status(OLLAMA_MODEL_ID);
-    expect(ollama.kind).toBe("ready");
+    // The downloaded model is cached; an unrelated repo id is not.
+    expect((await browserProvider.status("m")).kind).toBe("cached");
+    expect((await browserProvider.status("onnx-community/some-other-repo")).kind).toBe(
+      "download_required",
+    );
+  });
+
+  it("deleteDownload clears the cached state so the model needs re-downloading", async () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+      setItem: (key: string, value: string) => void store.set(key, String(value)),
+      removeItem: (key: string) => void store.delete(key),
+    });
+
+    await browserProvider.ensureReady("m", {});
+    browserProvider.release();
+    expect((await browserProvider.status("m")).kind).toBe("cached");
+
+    await browserProvider.deleteDownload?.("m");
+    expect((await browserProvider.status("m")).kind).toBe("download_required");
+    expect(store.size).toBe(0);
   });
 
   it("a cancelled download reports cancelled, not ready", async () => {
@@ -144,7 +168,44 @@ describe("failure isolation", () => {
     expect((await browserProvider.status("m")).kind).not.toBe("offline_ready");
   });
 
-  it("a failed initialisation reports error and stays unready", async () => {
+  it("registers a storage-quota failure as a clear error, not a fake ready", async () => {
+    hf.AutoProcessor.from_pretrained.mockRejectedValue(
+      new Error("QuotaExceededError: no space on device"),
+    );
+    await expect(browserProvider.ensureReady("m", {})).rejects.toThrow(/quota/i);
+    expect((await browserProvider.status("m")).kind).toBe("error");
+    expect((await browserProvider.status("m")).detail).toMatch(/storage/i);
+  });
+
+  it("never claims vision for the text-only browser model", async () => {
+    await browserProvider.ensureReady("m", {});
+    hf.processor.batch_decode.mockReturnValue([
+      JSON.stringify({ species: "Ivy", category: "plant", confidence: 0.5, note: "On a leaf." }),
+    ]);
+    const result = await browserProvider.parse(
+      { text: "A beetle on a leaf.", photo: { name: "leaf.jpg" } as unknown as File },
+      "m",
+      {},
+    );
+    expect(result.used_vision).toBe(false);
+    expect(result.notice).toMatch(/cannot read photos/i);
+    expect(apiMock.saveObservation).toHaveBeenCalledOnce();
+  });
+});
+
+describe("failure isolation", () => {
+  it("a failed download leaves the desktop model working", async () => {
+    hf.AutoProcessor.from_pretrained.mockRejectedValue(new Error("network down"));
+
+    await expect(browserProvider.ensureReady("m", {})).rejects.toThrow(/network down/);
+    expect((await browserProvider.status("m")).kind).toBe("error");
+
+    // The default path is untouched by the optional model's failure.
+    const ollama = await ollamaProvider.status(OLLAMA_MODEL_ID);
+    expect(ollama.kind).toBe("ready");
+  });
+
+  it("a failure reports error and stays unready", async () => {
     hf.processor.mockRejectedValue(new Error("bad tensor"));
 
     await expect(browserProvider.ensureReady("m", {})).rejects.toThrow(/bad tensor/);

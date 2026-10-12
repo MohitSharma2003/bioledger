@@ -8,7 +8,7 @@
   type ReactNode,
 } from "react";
 import { api } from "../api";
-import { browserProvider } from "./browser";
+import { browserProvider, hadCachedDownload } from "./browser";
 import { ollamaProvider } from "./ollama";
 import {
   detectCapability,
@@ -17,8 +17,9 @@ import {
   type CapabilityReport,
   type Recommendation,
 } from "./capability";
-import { BROWSER_MODELS, OLLAMA_MODELS, OLLAMA_MODEL_ID, desktopModel } from "./registry";
+import { BROWSER_MODELS, OLLAMA_MODELS, OLLAMA_MODEL_ID, desktopModel, formatBytes } from "./registry";
 import { flush as flushOutbox } from "./outbox";
+import { isReadyStatus, parseSelection, requireReadyBeforeUse, serializeSelection } from "./rules";
 import type {
   AskOut,
   ModelDescriptor,
@@ -27,6 +28,7 @@ import type {
   ObserveInput,
   ObserveResponse,
   ProviderId,
+  Selection,
   ServerProvider,
 } from "./types";
 
@@ -51,11 +53,6 @@ export interface MergedProvider {
   models: MergedModel[];
 }
 
-export interface Selection {
-  providerId: ProviderId;
-  modelId: string;
-}
-
 export interface ModelsContextValue {
   providers: MergedProvider[];
   active: Selection;
@@ -72,6 +69,10 @@ export interface ModelsContextValue {
   ensureReady: () => Promise<void>;
   enableModel: (providerId: ProviderId, modelId: string) => Promise<void>;
   cancelDownload: () => void;
+  /** Release the loaded browser model from memory; weights stay cached. */
+  unload: () => void;
+  /** Remove the downloaded files of a browser model best-effort. */
+  deleteDownload: (modelId?: string) => Promise<void>;
   parseSighting: (input: ObserveInput) => Promise<ObserveResponse>;
   answerQuestion: (question: string) => Promise<AskOut>;
 }
@@ -82,19 +83,8 @@ const DEFAULT_SELECTION: Selection = { providerId: "ollama", modelId: OLLAMA_MOD
 
 function readSelection(): Selection {
   if (typeof localStorage === "undefined") return DEFAULT_SELECTION;
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    const [providerId, ...rest] = raw.split(":");
-    const modelId = rest.join(":");
-    if ((providerId === "ollama" || providerId === "browser") && modelId) {
-      return { providerId, modelId };
-    }
-  }
-  return DEFAULT_SELECTION;
-}
-
-function isReady(status: ModelStatus): boolean {
-  return status.kind === "ready" || status.kind === "offline_ready";
+  const parsed = parseSelection(localStorage.getItem(STORAGE_KEY));
+  return parsed ?? DEFAULT_SELECTION;
 }
 
 export function ModelsProvider({ children }: { children: ReactNode }) {
@@ -162,7 +152,7 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
-      setStatus((prev) => (isReady(prev) ? prev : { kind: "checking" }));
+      setStatus((prev) => (isReadyStatus(prev) ? prev : { kind: "checking" }));
       try {
         const next = await provider.status(active.modelId);
         if (alive) setStatus(next);
@@ -185,7 +175,7 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
     setActive({ providerId, modelId });
     setProgress(null);
     if (typeof localStorage !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, `${providerId}:${modelId}`);
+      localStorage.setItem(STORAGE_KEY, serializeSelection(providerId, modelId));
     }
   }, []);
 
@@ -238,11 +228,31 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
     }
   }, [active.providerId]);
 
+  const unload = useCallback(() => {
+    if (active.providerId !== "browser") return;
+    browserProvider.release();
+    setBusy(false);
+    setProgress(null);
+    setStatus({
+      kind: "cached",
+      detail: "Unloaded. The downloaded files stay cached; load again when you want to use it.",
+    });
+  }, [active.providerId]);
+
+  const deleteDownload = useCallback(async () => {
+    if (active.providerId !== "browser") return;
+    await browserProvider.deleteDownload?.(active.modelId);
+    setBusy(false);
+    setProgress(null);
+    setStatus({
+      kind: "download_required",
+      detail: "Downloaded files were removed. Download again when you need this model.",
+    });
+  }, [active.providerId]);
+
   const parseSighting = useCallback(
     async (input: ObserveInput): Promise<ObserveResponse> => {
-      if (active.providerId === "browser" && !isReady(status)) {
-        throw new Error("The mobile model is not loaded yet. Open the model menu and choose Download first.");
-      }
+      requireReadyBeforeUse(active.providerId, status, "writing a new sighting");
       const provider = PROVIDERS[active.providerId];
       const result = await provider.parse(input, active.modelId, { device: preferredDevice(capability) });
       if (active.providerId === "browser") {
@@ -257,9 +267,7 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
 
   const answerQuestion = useCallback(
     async (question: string): Promise<AskOut> => {
-      if (active.providerId === "browser" && !isReady(status)) {
-        throw new Error("The mobile model is not loaded yet. Open the model menu and choose Download first.");
-      }
+      requireReadyBeforeUse(active.providerId, status, "answering a journal question");
       const provider = PROVIDERS[active.providerId];
       return provider.answer(question, active.modelId, { device: preferredDevice(capability) });
     },
@@ -307,18 +315,25 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
       let modelStatus: ModelStatus;
       if (!capability) modelStatus = { kind: "checking" };
       else if (!capability.canRunBrowserModel) {
-        modelStatus = { kind: "unsupported", detail: "This browser cannot run the mobile model." };
+        modelStatus = { kind: "unsupported", detail: "This browser cannot run the browser model." };
       } else if (isActive) {
         modelStatus = status;
+      } else if (hadCachedDownload(m.id)) {
+        // Downloaded before this page view. The AI Model Browser shows this as
+        // "downloaded / load" without re-downloading anything.
+        modelStatus = {
+          kind: "cached",
+          detail: "Downloaded to this app already. Load it when you want to use it.",
+        };
       } else {
         // Not selected yet, so we do not claim it is installed, downloaded, or
         // working. This browser has the capability, but nothing is verified.
         modelStatus = {
-          kind: "unverified",
-          detail: "Not verified in this browser yet. Select to download and check.",
+          kind: "download_required",
+          detail: `One-time download of about ${formatBytes(m.sizeBytes)}. Nothing was downloaded without your OK.`,
         };
       }
-      return { ...m, present: isActive && isReady(status), status: modelStatus };
+      return { ...m, present: isActive && isReadyStatus(status), status: modelStatus };
     });
 
     const ollamaStatus: ModelStatus = ollamaServer?.status ?? { kind: "checking" };
@@ -363,7 +378,7 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
       active,
       activeModel,
       status,
-      ready: isReady(status),
+      ready: isReadyStatus(status),
       busy,
       progress,
       capability,
@@ -373,6 +388,8 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
       ensureReady,
       enableModel,
       cancelDownload,
+      unload,
+      deleteDownload,
       parseSighting,
       answerQuestion,
     }),
@@ -390,6 +407,8 @@ export function ModelsProvider({ children }: { children: ReactNode }) {
       ensureReady,
       enableModel,
       cancelDownload,
+      unload,
+      deleteDownload,
       parseSighting,
       answerQuestion,
     ],
@@ -403,4 +422,6 @@ export function useModels(): ModelsContextValue {
   if (!ctx) throw new Error("useModels must be used inside ModelsProvider");
   return ctx;
 }
+
+export type { Selection };
 

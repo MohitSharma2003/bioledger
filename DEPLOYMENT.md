@@ -14,6 +14,12 @@ Read the whole "What is not deployed" section before you publish anything.
   without an AI note. AI on the deployed site comes from the optional
   browser-local model (Gemma 4 E2B, Transformers.js on WebGPU), which downloads
   from Hugging Face into the visitor's browser, never onto your server.
+- **AI Model Browser never forces a download.** The `/models` page lists only
+  verified models and nothing downloads until the visitor confirms the size. The
+  server performs no inference for the browser provider; prompts, journal
+  context, and observations never leave the visitor's browser for that provider.
+  Model files come from the Hugging Face hub, not the app build, so no weights
+  are ever committed to Git or shipped from Render.
 - **The Ollama address is never advertised while it is down.** The `/api/models`
   endpoint returns `endpoint: null` for Ollama unless the server can actually
   reach it, so a public deploy cannot be probed for an internal host.
@@ -159,6 +165,10 @@ use, and none of it exists in option A.
   return 200 with the correct media types.
 - Record an observation with no photo and confirm it persists across a restart
   (paid plan with disk) or note the reset (free plan).
+- Open `/models`: a card shows Gemma 4 E2B with a verified badge, its real
+  download size, and WebGPU requirements. Pressing Download asks for consent
+  first; downloaded weights are cached by the browser (Transformers.js cache),
+  not by this server, and survive page reloads.
 - Visit the site over HTTPS in Chrome on a phone: Add to Home Screen, open it
   offline, and it loads. The browser model downloads on demand (a few gigabytes,
   WebGPU required) if you want on-device AI.

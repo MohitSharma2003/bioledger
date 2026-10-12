@@ -1,6 +1,7 @@
 import { api } from "../api";
 import type { Observation } from "../types";
 import { GEMMA4_E2B_ONNX_ID, browserModel, formatBytes } from "./registry";
+import { catalogModel, defaultCatalogModel, type CatalogModel } from "./catalog";
 import { extractJson, normalizeObservation } from "./normalize";
 import { enqueue, syntheticObservation } from "./outbox";
 import { putPhoto } from "../photos";
@@ -17,35 +18,54 @@ import type {
 } from "./types";
 
 /**
- * Gemma 4 E2B, running entirely in the browser with Transformers.js on WebGPU.
+ * Browser-local inference with Transformers.js.
  *
- * The q4f16 weights are about 3.2 GB and are fetched once from the Hugging Face
- * hub, then cached by the browser so later runs work offline. This runtime
- * requires WebGPU: the same model on the WASM backend would be impractically
- * slow, so we report it as unsupported rather than pretend otherwise.
+ * Models come from the verified catalog in `catalog.ts`. Once a model's
+ * weights are fetched from the Hugging Face hub they are cached by the runtime,
+ * so later runs (including offline) reuse them. Each model's cached state is
+ * remembered per repo id so a page reload can say "downloaded, load it"
+ * instead of pretending the download has to happen again.
  */
 
 const MODEL_ID = GEMMA4_E2B_ONNX_ID;
 
-// Set once the weights have been fetched and verified, so that after a reload
-// (or a relaunch of the installed app) the UI can say "downloaded, load it"
-// instead of pretending the 3.2 GB download has to happen all over again.
-const CACHED_KEY = "bioledger.browser.cached";
+function entryFor(id: string): CatalogModel {
+  return catalogModel(id) ?? defaultCatalogModel();
+}
 
-function wasCached(): boolean {
+const CACHED_PREFIX = "bioledger.browser.cached";
+
+function cacheKey(id: string): string {
+  return `${CACHED_PREFIX}.${id}`;
+}
+
+function wasCached(id: string): boolean {
   try {
-    return typeof localStorage !== "undefined" && localStorage.getItem(CACHED_KEY) === "1";
+    return typeof localStorage !== "undefined" && localStorage.getItem(cacheKey(id)) === "1";
   } catch {
     return false;
   }
 }
 
-function markCached(): void {
+function markCached(id: string): void {
   try {
-    if (typeof localStorage !== "undefined") localStorage.setItem(CACHED_KEY, "1");
+    if (typeof localStorage !== "undefined") localStorage.setItem(cacheKey(id), "1");
   } catch {
     /* storage may be blocked; the download still works, only the hint is lost */
   }
+}
+
+function clearCached(id: string): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.removeItem(cacheKey(id));
+  } catch {
+    /* storage may be blocked */
+  }
+}
+
+/** Pure cache-state lookup, so the UI can render "downloaded" after a reload. */
+export function hadCachedDownload(id: string): boolean {
+  return wasCached(id);
 }
 
 // The library ships its own types; we treat the handles as opaque here so this
@@ -63,6 +83,7 @@ let loaded = false;
 let loading = false;
 let cancelled = false;
 let lastError: ModelStatus | null = null;
+let loadedModelId: string | null = null;
 
 const PARSE_SYSTEM =
   "You turn one plain nature observation into a single JSON object. " +
@@ -83,26 +104,48 @@ function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof navigator !== "undefined";
 }
 
+/** Drop the in-memory model; cached weights and cache flags stay untouched. */
+function releaseRuntime(): void {
+  loadPromise = null;
+  bundle = null;
+  loadedModelId = null;
+  loaded = false;
+  loading = false;
+  cancelled = false;
+  lastError = null;
+}
+
 function webgpuAvailable(): boolean {
   if (!isBrowser()) return false;
   const nav = navigator as Navigator & { gpu?: unknown };
   return Boolean(nav.gpu);
 }
 
-function classifyError(error: unknown): ModelStatus {
+function classifyError(error: unknown, entry: CatalogModel): ModelStatus {
   const detail = error instanceof Error ? error.message : String(error);
+  if (/quota|no space|not enough space|storage/i.test(detail)) {
+    return {
+      kind: "error",
+      detail: `The browser refused the download (${detail}). The device may be low on storage, or storage is blocked.`,
+    };
+  }
   if (/out of memory|allocation failed|failed to allocate|\boom\b|aborted/i.test(detail)) {
     return { kind: "out_of_memory", detail };
   }
   if (/webgpu|gpuadapter|adapter/i.test(detail)) {
-    return { kind: "unsupported", detail };
+    return {
+      kind: "unsupported",
+      detail: `${entry.name} needs ${entry.devices.join("/")}, which this browser did not offer (${detail}).`,
+    };
   }
   return { kind: "error", detail };
 }
 
 /** Load the processor and model once, verify it, and share the promise. */
-async function load(request: ReadyRequest): Promise<Bundle> {
-  if (loaded && bundle) return bundle;
+export async function load(request: ReadyRequest, modelId: string): Promise<Bundle> {
+  const entry = entryFor(modelId);
+  if (loaded && bundle && loadedModelId === modelId) return bundle;
+  if (loaded && bundle && loadedModelId !== modelId) releaseRuntime();
   if (loadPromise) return loadPromise;
 
   loading = true;
@@ -115,10 +158,10 @@ async function load(request: ReadyRequest): Promise<Bundle> {
     env.allowLocalModels = false;
     env.useBrowserCache = true;
 
-    const device: InferenceDevice = request.device ?? "webgpu";
-    const processor = await mod.AutoProcessor.from_pretrained(MODEL_ID);
-    const model = await mod.Gemma4ForConditionalGeneration.from_pretrained(MODEL_ID, {
-      dtype: "q4f16",
+    const device: InferenceDevice = request.device ?? entry.devices[0] ?? "webgpu";
+    const processor = await mod.AutoProcessor.from_pretrained(entry.id);
+    const model = await mod[entry.className].from_pretrained(entry.id, {
+      dtype: entry.dtype,
       device,
       progress_callback: (info: AnyRecord) => {
         if (cancelled || !request.onProgress) return;
@@ -139,31 +182,35 @@ async function load(request: ReadyRequest): Promise<Bundle> {
   try {
     const ready = await loadPromise;
     if (cancelled) throw new Error("Download cancelled.");
-    await verify(ready);
+    await verify(ready, entry);
     if (cancelled) throw new Error("Download cancelled.");
-    markCached();
+    markCached(modelId);
     bundle = ready;
+    loadedModelId = modelId;
     loaded = true;
     loading = false;
+    lastError = null;
     return ready;
   } catch (error) {
     loadPromise = null;
     bundle = null;
+    loadedModelId = null;
     loaded = false;
     loading = false;
-    lastError = cancelled ? null : classifyError(error);
+    lastError = cancelled ? null : classifyError(error, entry);
     throw error;
   }
 }
 
 /** A real one-line generation, so "ready" means the model actually works. */
-async function verify(ready: Bundle): Promise<void> {
-  const reply = await generate(ready, "", "Reply with the single word: ready", null, 8);
-  if (!reply) throw new Error("Gemma 4 E2B loaded but produced no test output.");
+async function verify(ready: Bundle, entry: CatalogModel): Promise<void> {
+  const reply = await generate(ready, entry, "", "Reply with the single word: ready", null, 8);
+  if (!reply) throw new Error(`${entry.name} loaded but produced no test output.`);
 }
 
 async function generate(
   ready: Bundle,
+  entry: CatalogModel,
   system: string,
   user: string,
   imageUrl: string | null,
@@ -175,7 +222,7 @@ async function generate(
   content.push({ type: "text", text: user });
 
   const messages: AnyRecord[] = [];
-  // The system turn must be plain text: Gemma's chat template trims the first
+  // The system turn must be plain text: the chat template trims the first
   // message's content, and "trim" cannot operate on a multimodal content array.
   if (system) messages.push({ role: "system", content: system });
   messages.push({ role: "user", content });
@@ -236,12 +283,22 @@ async function context(): Promise<string> {
   }
 }
 
-function photoNotice(error: unknown): string {
-  const detail = error instanceof Error ? error.message : String(error);
-  if (!webgpuAvailable()) {
-    return "This browser has no WebGPU, so Gemma 4 E2B could not run here. The sighting was saved as written.";
+/** Best-effort removal of a model's cached files from the Cache Storage API. */
+async function pruneModelFiles(repoId: string): Promise<void> {
+  if (typeof caches === "undefined") return;
+  const suffix = repoId.replace("/", "--");
+  try {
+    const names = await caches.keys();
+    for (const name of names) {
+      const cache = await caches.open(name);
+      const requests = await cache.keys();
+      for (const request of requests) {
+        if (request.url.includes(suffix)) await cache.delete(request);
+      }
+    }
+  } catch {
+    /* best-effort: some browsers lock or evict caches; the flag is removed anyway */
   }
-  return `Gemma 4 E2B could not finish reading this just now (${detail}). The sighting was saved as written.`;
 }
 
 export const browserProvider: ModelProvider = {
@@ -252,60 +309,64 @@ export const browserProvider: ModelProvider = {
   models: () => [browserModel(MODEL_ID)!],
 
   async status(modelId: string): Promise<ModelStatus> {
+    const entry = entryFor(modelId);
     if (!isBrowser()) return { kind: "unsupported", detail: "Not running in a browser." };
-    if (loaded && bundle) return { kind: "offline_ready", detail: "Loaded and ready, works offline." };
-    if (loading) return { kind: "initializing", detail: "Loading Gemma 4 E2B..." };
+    if (loaded && bundle && loadedModelId === modelId) {
+      return { kind: "offline_ready", detail: `${entry.name} is loaded and ready, and works offline.` };
+    }
+    if (loading) return { kind: "initializing", detail: `Loading ${entry.name}...` };
     if (lastError) return lastError;
     if (!webgpuAvailable()) {
       return {
         kind: "unsupported",
-        detail: "This browser has no WebGPU, so Gemma 4 E2B cannot run here.",
+        detail: `This browser has no WebGPU, so ${entry.name} cannot run here.`,
       };
     }
-    const descriptor = browserModel(modelId);
-    if (wasCached()) {
+    if (wasCached(modelId)) {
       return {
         kind: "cached",
-        detail: "Downloaded to this app already. Loading it from local storage takes a few seconds.",
+        detail: `${entry.name} is downloaded to this app already. Loading it from local storage takes a few seconds.`,
       };
     }
     return {
       kind: "download_required",
-      detail: `One-time download of about ${formatBytes(descriptor?.sizeBytes)}.`,
+      detail: `One-time download of about ${formatBytes(entry.sizeBytes)}, then cached for offline use.`,
     };
   },
 
-  async ensureReady(_modelId: string, request: ReadyRequest): Promise<void> {
-    await load(request);
+  async ensureReady(modelId: string, request: ReadyRequest): Promise<void> {
+    await load(request, modelId);
   },
 
-  async parse(input: ObserveInput, _modelId: string, request: ReadyRequest): Promise<ObserveResponse> {
+  async parse(input: ObserveInput, modelId: string, request: ReadyRequest): Promise<ObserveResponse> {
+    const entry = entryFor(modelId);
     const text = input.text.trim();
     let parsed: ParsedObservation;
     let notice: string | null = null;
     let aiProcessed = true;
-    let imageUrl: string | null = null;
 
     try {
-      if (input.photo) imageUrl = URL.createObjectURL(input.photo);
-      const ready = await load(request);
+      const ready = await load(request, modelId);
       const prompt =
         `Observation: ${text}\n` +
         (input.place?.trim() ? `Place: ${input.place.trim()}\n` : "") +
         "Return the JSON object.";
-      const reply = await generate(ready, PARSE_SYSTEM, prompt, imageUrl, 320);
+      // Text-only model: never route a photo into it. The photo is still saved
+      // with the note, but nothing here pretends the model read it.
+      const reply = await generate(ready, entry, PARSE_SYSTEM, prompt, null, 320);
       const json = extractJson(reply);
       parsed = normalizeObservation(json ?? {});
       if (!json) {
         aiProcessed = false;
-        notice = "Gemma 4 E2B replied in a form I could not read, so the note was saved as written.";
+        notice = `${entry.name} replied in a form I could not read, so the note was saved as written.`;
+      } else if (input.photo) {
+        notice =
+          "The browser model cannot read photos yet. Your photo is saved with the note; the note's text specialists did the writing.";
       }
     } catch (error) {
       aiProcessed = false;
       parsed = normalizeObservation({});
-      notice = photoNotice(error);
-    } finally {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      notice = photoNotice(entry, error);
     }
 
     const saved = await save(
@@ -329,19 +390,21 @@ export const browserProvider: ModelProvider = {
       observation: saved,
       similar: [],
       in_season: season,
-      used_vision: Boolean(input.photo) && aiProcessed,
+      used_vision: false,
       ai_processed: aiProcessed,
       notice,
     };
   },
 
-  async answer(question: string, _modelId: string, request: ReadyRequest): Promise<AskOut> {
+  async answer(question: string, modelId: string, request: ReadyRequest): Promise<AskOut> {
+    const entry = entryFor(modelId);
     const entries = await context();
     let reply = "";
     try {
-      const ready = await load(request);
+      const ready = await load(request, modelId);
       reply = await generate(
         ready,
+        entry,
         ANSWER_SYSTEM,
         `Journal entries:\n${entries}\n\nQuestion: ${question}`,
         null,
@@ -359,7 +422,7 @@ export const browserProvider: ModelProvider = {
     if (!reply) {
       return {
         answer:
-          "Gemma 4 E2B could not answer just now. Your journal is still saved; try again when the model is loaded.",
+          `${entry.name} could not answer just now. Your journal is still saved; try again when the model is loaded.`,
         sources: [],
         mode: "offline",
       };
@@ -374,15 +437,28 @@ export const browserProvider: ModelProvider = {
     lastError = null;
     loadPromise = null;
     bundle = null;
+    loadedModelId = null;
     loaded = false;
   },
 
+  async deleteDownload(modelId: string): Promise<void> {
+    clearCached(modelId);
+    const entry = entryFor(modelId);
+    if (loaded && loadedModelId === modelId) {
+      releaseRuntime();
+    }
+    await pruneModelFiles(entry.id);
+  },
+
   release(): void {
-    loadPromise = null;
-    bundle = null;
-    loaded = false;
-    loading = false;
-    cancelled = false;
-    lastError = null;
+    releaseRuntime();
   },
 };
+
+function photoNotice(entry: CatalogModel, error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error);
+  if (!webgpuAvailable()) {
+    return `This browser has no WebGPU, so ${entry.name} could not run here. The sighting was saved as written.`;
+  }
+  return `${entry.name} could not finish reading this just now (${detail}). The sighting was saved as written.`;
+}

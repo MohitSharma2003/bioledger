@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ImagePlus, Loader2, NotebookPen, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -151,13 +152,21 @@ export function NewSighting({
 
       <div className="lg:pt-7">
         {result ? (
-          <Specimen
-            observation={result.observation}
-            similar={result.similar}
-            season={result.in_season}
-            usedVision={result.used_vision}
-            fresh
-          />
+          <>
+            <Specimen
+              observation={result.observation}
+              similar={result.similar}
+              season={result.in_season}
+              usedVision={result.used_vision}
+              fresh
+            />
+            {result.ai_processed ? (
+              <ReviewNote
+                species={result.observation.species}
+                confidence={result.observation.confidence}
+              />
+            ) : null}
+          </>
         ) : (
           <EmptyState className="flex h-full min-h-[340px] flex-col items-center justify-center gap-3">
             <NotebookPen size={26} className="text-moss/70" />
@@ -168,6 +177,26 @@ export function NewSighting({
           </EmptyState>
         )}
       </div>
+    </div>
+  );
+}
+
+function ReviewNote({ species, confidence }: { species: string; confidence: number }) {
+  const pct = Math.round(confidence * 100);
+  return (
+    <div
+      role="status"
+      className="mt-4 rounded-sm border border-moss/30 bg-sage/40 px-4 py-3.5 text-[0.85rem] text-forest"
+    >
+      <p>
+        Saved as <span className="font-medium">{species}</span>
+        {confidence > 0 ? <span> · the model gave it {pct}% confidence</span> : null}. This was
+        parsed by the model, not checked by a field guide. If it is wrong, edit the sighting in{" "}
+        <Link to="/sightings" className="font-medium underline decoration-dotted underline-offset-4">
+          My Sightings
+        </Link>
+        .
+      </p>
     </div>
   );
 }

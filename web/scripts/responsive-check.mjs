@@ -18,7 +18,7 @@ const CHROME =
   process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 
 const WIDTHS = [320, 360, 375, 390, 412, 768, 1024, 1440];
-const ROUTES = ["/", "/sightings", "/ask", "/ledger", "/season"];
+const ROUTES = ["/", "/sightings", "/ask", "/ledger", "/season", "/models"];
 const MIN_TOUCH = 44;
 
 const browser = await puppeteer.launch({

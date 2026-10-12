@@ -5,6 +5,11 @@ export type ProviderRuntime = "ollama" | "transformers.js";
 export type ProviderLocation = "server" | "client";
 export type InferenceDevice = "webgpu" | "wasm";
 
+export interface Selection {
+  providerId: ProviderId;
+  modelId: string;
+}
+
 export interface ModelDescriptor {
   id: string;
   provider: ProviderId;
@@ -119,6 +124,8 @@ export interface ModelProvider {
   answer: (question: string, modelId: string, request: ReadyRequest) => Promise<AskOut>;
   /** Abort an in-progress download/initialisation, where the runtime allows it. */
   cancel?: () => void;
+  /** Remove downloaded files for a model where the runtime allows it. */
+  deleteDownload?: (modelId: string) => Promise<void>;
   release: () => void;
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Check, ChevronDown, Download, Loader2, Play, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useModels, type MergedModel } from "../lib/models/context";
@@ -285,6 +286,13 @@ export function ModelSelector({ className }: { className?: string }) {
             Everything runs on your machine. The mobile model is optional: it
             downloads once, then is cached for offline use. No data leaves your device.
           </p>
+          <Link
+            to="/models"
+            onClick={() => setOpen(false)}
+            className="mx-2 mt-1 mb-1.5 flex min-h-[36px] items-center rounded-sm px-2 text-[0.8rem] font-medium text-moss underline decoration-dotted underline-offset-4 hover:text-forest"
+          >
+            Open AI Model Browser
+          </Link>
           {outboxPending > 0 ? (
             <p className="px-2 pb-1 font-mono text-[0.62rem] uppercase tracking-[0.08em] text-ochre">
               {outboxPending} sighting{outboxPending === 1 ? "" : "s"} saved offline, waiting to sync

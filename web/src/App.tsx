@@ -10,6 +10,7 @@ import { SightingsPage } from "./pages/SightingsPage";
 import { AskPage } from "./pages/AskPage";
 import { LedgerPage } from "./pages/LedgerPage";
 import { SeasonPage } from "./pages/SeasonPage";
+import { ModelBrowserPage } from "./pages/ModelBrowserPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/ask" element={<AskPage />} />
               <Route path="/ledger" element={<LedgerPage />} />
               <Route path="/season" element={<SeasonPage />} />
+              <Route path="/models" element={<ModelBrowserPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

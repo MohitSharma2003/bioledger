@@ -1,3 +1,4 @@
+import { MODEL_CATALOG } from "./catalog";
 import type { ModelDescriptor } from "./types";
 
 /**
@@ -29,20 +30,23 @@ export const GEMMA4_E2B_ONNX_ID = "onnx-community/gemma-4-E2B-it-ONNX";
  */
 export const GEMMA4_E2B_ONNX_BYTES = 3_381_966_758;
 
-export const BROWSER_MODELS: ModelDescriptor[] = [
-  {
-    id: GEMMA4_E2B_ONNX_ID,
-    provider: "browser",
-    runtime: "transformers.js",
-    label: MOBILE_MODEL_LABEL,
-    subtitle: MOBILE_MODEL_SUBTITLE,
-    text: true,
-    vision: true,
-    sizeBytes: GEMMA4_E2B_ONNX_BYTES,
-    license: "Apache-2.0",
-    note: "Runs in this browser on WebGPU. One-time download, then cached for offline use.",
-  },
-];
+/**
+ * The browser models come straight from the verified catalog: whatever is
+ * listed there has been proven to download and load. Adding to the AI Model
+ * Browser means adding a verified entry to `catalog.ts`, nothing else.
+ */
+export const BROWSER_MODELS: ModelDescriptor[] = MODEL_CATALOG.map((m) => ({
+  id: m.id,
+  provider: "browser",
+  runtime: m.runtime,
+  label: MOBILE_MODEL_LABEL,
+  subtitle: MOBILE_MODEL_SUBTITLE,
+  text: m.text,
+  vision: m.vision,
+  sizeBytes: m.sizeBytes,
+  license: m.license,
+  note: m.note,
+}));
 
 /** Shown before the server reports its own model ids. */
 export const OLLAMA_MODELS: ModelDescriptor[] = [
@@ -60,10 +64,6 @@ export const OLLAMA_MODELS: ModelDescriptor[] = [
 
 export function browserModel(id: string): ModelDescriptor | undefined {
   return BROWSER_MODELS.find((m) => m.id === id);
-}
-
-export function defaultBrowserModel(): ModelDescriptor {
-  return BROWSER_MODELS[0];
 }
 
 /** Display label and subtitle for a server-reported Ollama model. */
