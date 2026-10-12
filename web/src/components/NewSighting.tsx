@@ -5,18 +5,17 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Specimen } from "./Specimen";
 import { EmptyState } from "./bits";
-import { api } from "../lib/api";
+import { useModels } from "../lib/models/context";
 import type { ObserveResponse } from "../lib/types";
 
 export function NewSighting({
-  modelReady,
   onLogged,
   onResult,
 }: {
-  modelReady: boolean;
   onLogged?: () => void;
   onResult: (notice: string | null) => void;
 }) {
+  const { parseSighting, ready } = useModels();
   const [text, setText] = useState("");
   const [place, setPlace] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -38,11 +37,11 @@ export function NewSighting({
     setSubmitting(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.set("text", text.trim());
-      if (place.trim()) form.set("place", place.trim());
-      if (photo) form.set("photo", photo);
-      const res = await api.observe(form);
+      const res = await parseSighting({
+        text: text.trim(),
+        place: place.trim(),
+        photo,
+      });
       setResult(res);
       onResult(res.ai_processed ? null : res.notice || "The model was unavailable.");
       onLogged?.();
@@ -145,7 +144,7 @@ export function NewSighting({
             )}
           </Button>
           <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-muted">
-            {modelReady ? "model ready" : "saved offline"}
+            {ready ? "model ready" : "saves offline"}
           </span>
         </div>
       </form>

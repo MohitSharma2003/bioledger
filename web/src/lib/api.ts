@@ -8,9 +8,17 @@ import type {
   Stats,
   TimelineDay,
 } from "./types";
+import type { NewObservationInput, ServerProvider } from "./models/types";
+
+// Production API origin, if the UI and API do not share one origin. Empty by
+// default (same-origin requests, or a proxy like the Vercel rewrite forwards
+// /api on the same origin). Set VITE_API_BASE at build time only when the API is
+// served from a different host and you also configure BIOLEDGER_PUBLIC_BASE and
+// BIOLEDGER_CORS_ORIGINS on it.
+const API_BASE = String((import.meta.env as Record<string, string | undefined>).VITE_API_BASE ?? "").replace(/\/$/, "");
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(path, options);
+  const res = await fetch(API_BASE + path, options);
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -52,6 +60,21 @@ export const api = {
   observation: (id: number) => request<Observation>(`/api/observations/${id}`),
   observe: (form: FormData) =>
     request<ObserveResponse>("/api/observe", { method: "POST", body: form }),
+  models: () => request<{ providers: ServerProvider[] }>("/api/models"),
+  saveObservation: (payload: NewObservationInput) =>
+    request<Observation>("/api/observations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
+  attachPhoto: (id: number, photo: File | Blob) => {
+    const form = new FormData();
+    form.set("photo", photo);
+    return request<Observation>(`/api/observations/${id}/photo`, {
+      method: "POST",
+      body: form,
+    });
+  },
   ask: (question: string) =>
     request<AskOut>("/api/ask", {
       method: "POST",

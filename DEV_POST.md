@@ -3,12 +3,14 @@ title: "Bioledger: a nature notebook that runs on my laptop, not someone's cloud
 published: false
 description: "I built an offline naturalist field notebook on an open-weight model: spend ten minutes outside, and a local Gemma writes the field note. Hacktoberfest 2026 Week 1: Touch Grass."
 tags: devchallenge, hf26challenge, ai, opensource
-cover_image: # paste your screenshot/GIF URL here before publishing
+cover_image: https://raw.githubusercontent.com/MohitSharma2003/bioledger/main/docs/01-record-a-sighting.png
 ---
 
 <!--
-BEFORE YOU PUBLISH (2 things only):
-1. Replace every [[...]] marker with your real repo URL / screenshot / session link.
+BEFORE YOU PUBLISH:
+1. Push the repo and the docs/ screenshots to GitHub (main branch); the image URLs above
+   point at raw.githubusercontent.com/MohitSharma2003/bioledger/main/docs/... and will only
+   render once those files are pushed.
 2. Read it out loud and change any sentence that doesn't sound like you.
 Everything else is already accurate to the code in the repo.
 -->
@@ -45,6 +47,12 @@ A few seconds later you get a tidy field note:
 
 and a **ledger** that tracks sightings, species, a day-streak, and what's in season right now.
 
+It's also installable. The same site is a Progressive Web App, so it can be pinned to a home
+screen or installed on a desktop and opened like a native app, and it keeps working offline.
+By default the model is **Gemma3:4B** running locally through Ollama; an optional **Gemma 4
+E2B** model can run entirely inside the browser on WebGPU, downloaded once and then kept in
+local storage. Either way, nothing you log leaves the device.
+
 ## Why a tracker wasn't enough
 
 Most "touch grass" projects are wellness or screen-time trackers, and the screen is still the
@@ -54,17 +62,18 @@ tick off and becomes data you actually want to keep.
 
 ## Demo
 
-![Bioledger: logging a sighting and seeing it become a field note](docs/demo.gif)
+![Bioledger: recording a sighting](https://raw.githubusercontent.com/MohitSharma2003/bioledger/main/docs/01-record-a-sighting.png)
 
-[[ Replace with your GIF or 2-3 screenshots. Save them into a `docs/` folder in the repo and
-reference them here. This is the single most important thing you can add. ]]
+![Bioledger: the sightings ledger](https://raw.githubusercontent.com/MohitSharma2003/bioledger/main/docs/02-sightings.png)
+
+![Bioledger: the ledger overview](https://raw.githubusercontent.com/MohitSharma2003/bioledger/main/docs/03-ledger.png)
 
 Run it yourself in about a minute:
 
 ```bash
 ollama pull gemma3:4b
 ollama pull nomic-embed-text
-git clone [[YOUR REPO URL]]
+git clone https://github.com/MohitSharma2003/bioledger
 cd bioledger
 pip install -r requirements.txt
 uvicorn main:app --reload
@@ -75,10 +84,9 @@ still runs; it just can't write new notes until it's back.
 
 ## Code
 
-[[ Embed your GitHub repo directly here, on DEV, paste the repo URL on its own line and it
-renders as a card. Example: https://github.com/YOUR_USERNAME/bioledger ]]
+https://github.com/MohitSharma2003/bioledger
 
-Source: [[YOUR GITHUB REPO URL]] · License: MIT
+Source: https://github.com/MohitSharma2003/bioledger · License: MIT
 
 ## How I Built It
 
@@ -97,8 +105,13 @@ Browser UI ──▶ FastAPI ──▶ local Gemma (Ollama) ──▶ structured
                                        • pgvector = "find similar sightings"
 ```
 
-- **Open-weight model** (`gemma3:4b`) via **Ollama** writes each field note and answers
-  questions in plain language ("what did I see near water in spring?").
+- **Default model: Gemma3:4B** (`gemma3:4b`, Apache-2.0), through **Ollama**. It writes each
+  field note, reads photos, and answers questions in plain language ("what did I see near
+  water in spring?").
+- **Optional mobile model: Gemma 4 E2B (for mobile)**, running **entirely in a browser on
+  WebGPU** (Transformers.js). It is a separate runtime: the weights download once after you
+  select it and say yes, are cached offline, and it is never downloaded, initialized, or used
+  automatically. It is not a fallback for the desktop model either.
 - **Local embeddings** (`nomic-embed-text`) power "find similar sightings": nearest-neighbour
   search over my own notes, with no internet.
 - **A real hybrid store.** By default it's a single SQLite file, so it's truly offline with
@@ -115,7 +128,9 @@ Two bits I'm proud of:
 - It's genuinely **private by default**: the model and the database are both local, so the
   sensitive part of a naturalist's log (*where* and *what*) never leaves the machine.
 - It **degrades gracefully**: photo reading on-device with `gemma3:4b`, or swap in the tiny
-  `moondream` vision model with one env var (`BIOLEDGER_VISION_MODEL=moondream`).
+  `moondream` vision model with one env var (`BIOLEDGER_VISION_MODEL=moondream`). If the
+  optional browser model can't run (no WebGPU), the desktop path is untouched and the UI
+  says so instead of hiding it.
 
 ## Why Does Open Innovation Matter?
 
@@ -124,9 +139,9 @@ it's not a slogan; it's the reason the app can exist at all:
 
 | Decision | Open approach (what I did) | Closed alternative | Why open won here |
 | --- | --- | --- | --- |
-| The model | Open-weight **Gemma 3** (`gemma3:4b`) via **Ollama**, on my laptop | A hosted vision/chat API | Works **offline**, **$0 per note**, no card on file |
+| The model | Open-weight **Gemma3:4B** (`gemma3:4b`) via **Ollama**, with an optional **Gemma 4 E2B** browser runtime | A hosted vision/chat API | Works **offline**, **$0 per note**, no card on file |
 | My data | Locations + sightings stay in a local database on my disk | Prompts and photos logged on a server I don't control | The private thing a naturalist keeps never leaves the machine |
-| Model choice | Swap with one env var (`BIOLEDGER_MODEL`) | Locked to one vendor's endpoint | The same app runs a 4B model or a bigger one |
+| Model choice | Swap with one env var (`BIOLEDGER_MODEL`), or run the optional model in-browser | Locked to one vendor's endpoint | The same app runs a 4B model on a laptop or in a phone browser |
 | Embeddings | Local `nomic-embed-text` | A cloud embedding API | "Find similar sightings" works with no internet |
 
 A closed pipeline forces a trade: either you pay per call and upload your location history,
@@ -137,7 +152,8 @@ the capability doesn't depend on one vendor staying online, affordable, or inter
 ## What Surprised Me
 
 - **A 4B model is genuinely enough.** The task is well-scoped (read one messy sentence → one
-  structured record), so a small open model does it well and fast on a laptop.
+  structured record), so Gemma3:4B does it well and fast on a laptop. It was a surprise that a
+  browser could run an even smaller Gemma 4 E2B locally on a phone.
 - **I had to force honesty.** Early on the model kept inventing Latin species names with total
   confidence. I tightened the prompt to prefer plain names and to say when it's unsure; now
   it says "copper dragonfly" instead of fabricating *something*-us. Honest uncertainty turned
@@ -148,16 +164,13 @@ the capability doesn't depend on one vendor staying online, affordable, or inter
   forgotten I'd logged weeks ago; the ledger quietly became more useful than the sum of its
   entries.
 
-## My Agent Session
-
-[[ Optional but judges like it: save your build session with DevRelay and embed it here with
-the `agent_session` tag, or link to it. Delete this section if you skip it. ]]
-
 ## Prize Categories
 
 I'm entering **Best Use of Gemma**: Bioledger runs Google's open-weight Gemma locally for
-both text and vision, and the **Tiger Data** category, since the scalable store is a real
-TimescaleDB hypertable + continuous aggregate + pgvector setup, queried by agents over MCP.
+both text and vision. The default is **Gemma3:4B** through Ollama on the desktop, and an
+optional **Gemma 4 E2B (for mobile)** model runs entirely in-browser on WebGPU. I'm also
+entering the **Tiger Data** category, since the scalable store is a real TimescaleDB
+hypertable + continuous aggregate + pgvector setup, queried by agents over MCP.
 
 ## What's Next
 

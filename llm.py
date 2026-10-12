@@ -155,6 +155,17 @@ def _normalize(data: dict) -> dict:
     }
 
 
+def normalize_observation(data: dict) -> dict:
+    """Public, provider-agnostic shape check for an observation payload.
+
+    Used both after an Ollama response and when the browser runtime sends a
+    pre-parsed observation, so every store path clamps the same way.
+    """
+    if not isinstance(data, dict):
+        raise LLMError("observation payload is not an object")
+    return _normalize(data)
+
+
 def parse_observation(text: str, image_b64: Optional[str] = None) -> dict:
     """Turn free text (and optional image) into a structured observation.
 

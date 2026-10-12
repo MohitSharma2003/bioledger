@@ -13,6 +13,9 @@ export interface Observation {
   tags: string[];
   season_note?: string | null;
   source: string;
+  photo_url?: string | null;
+  photo_mime?: string | null;
+  photo_bytes?: number | null;
 }
 
 export interface SimilarResult {

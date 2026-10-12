@@ -28,6 +28,31 @@ class Observation(BaseModel):
     tags: List[str] = Field(default_factory=list)
     season_note: Optional[str] = None
     source: str = "user"
+    photo_url: Optional[str] = None
+    photo_mime: Optional[str] = None
+    photo_bytes: Optional[int] = None
+
+
+class NewObservation(BaseModel):
+    """A structured observation produced outside the server.
+
+    Used when the parser ran in the browser (the Transformers.js runtime), so
+    the server only validates and stores it. Every field is optional so a
+    provider that cannot name a species still saves the raw note.
+    """
+
+    text: str = ""
+    place: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    species: Optional[str] = None
+    common_name: Optional[str] = None
+    category: Optional[str] = None
+    confidence: Optional[float] = None
+    note: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    season_note: Optional[str] = None
+    source: str = "user"
 
 
 class SimilarResult(BaseModel):

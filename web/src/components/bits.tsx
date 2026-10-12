@@ -60,8 +60,8 @@ export function PageHeader({
 }) {
   return (
     <header className="mb-8 border-b border-rule pb-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-3xl">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0 max-w-3xl">
           {eyebrow ? (
             <p className={cn("eyebrow mb-2", eyebrowClassName)}>{eyebrow}</p>
           ) : null}

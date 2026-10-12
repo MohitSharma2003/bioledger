@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Camera, MapPin, Clock, Leaf } from "lucide-react";
 import { CategoryDot, categoryColor } from "./bits";
 import { formatDate, formatTime, seasonOf, titleCase } from "../lib/format";
+import { getPhotoURL } from "../lib/photos";
 import type { Observation, SimilarResult } from "../lib/types";
 
 export function Specimen({
@@ -9,14 +11,12 @@ export function Specimen({
   season = [],
   usedVision = false,
   fresh = false,
-  photoURL = null,
 }: {
   observation: Observation;
   similar?: SimilarResult[];
   season?: { species: string; count: number }[];
   usedVision?: boolean;
   fresh?: boolean;
-  photoURL?: string | null;
 }) {
   const pct = Math.round(o.confidence * 100);
   return (
@@ -80,15 +80,7 @@ export function Specimen({
         </Meta>
       </div>
 
-      {photoURL ? (
-        <div className="border-b border-rule px-6 py-5">
-          <img
-            src={photoURL}
-            alt={o.species}
-            className="max-h-72 w-full rounded-sm object-cover"
-          />
-        </div>
-      ) : null}
+      <SpecimenPhoto observation={o} />
 
       <div className="px-6 py-5">
         <p className="text-[1.05rem] leading-relaxed text-ink">
@@ -157,6 +149,46 @@ export function Specimen({
         </div>
       ) : null}
     </article>
+  );
+}
+
+/**
+ * The photo for a sighting, from the server when it has one, otherwise from
+ * the browser's offline cache. A broken or missing file simply hides the image
+ * instead of leaving a broken frame; the note is never affected.
+ */
+function SpecimenPhoto({ observation: o }: { observation: Observation }) {
+  const [url, setUrl] = useState<string | null>(o.photo_url ?? null);
+
+  useEffect(() => {
+    let alive = true;
+    let created: string | null = null;
+    setUrl(o.photo_url ?? null);
+    if (!o.photo_url) {
+      getPhotoURL(o.id)
+        .then((local) => {
+          if (!alive || !local) return;
+          created = local;
+          setUrl(local);
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      alive = false;
+      if (created) URL.revokeObjectURL(created);
+    };
+  }, [o.id, o.photo_url]);
+
+  if (!url) return null;
+  return (
+    <div className="border-b border-rule px-6 py-5">
+      <img
+        src={url}
+        alt={o.species}
+        className="max-h-72 w-full rounded-sm object-cover"
+        onError={() => setUrl(null)}
+      />
+    </div>
   );
 }
 

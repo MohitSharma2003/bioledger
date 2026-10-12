@@ -3,50 +3,10 @@ import { Link, NavLink } from "react-router-dom";
 import { Leaf, Menu, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { NAV_ROUTES } from "../lib/routes";
-import type { Health } from "../lib/types";
+import { ModelSelector } from "./ModelSelector";
+import { InstallApp } from "./InstallApp";
 
-function StatusPill({
-  health,
-  modelReady,
-}: {
-  health: Health | null;
-  modelReady: boolean;
-}) {
-  const state = modelReady ? "ready" : health?.ollama ? "loading" : "offline";
-  const label =
-    state === "ready"
-      ? health?.model ?? "model ready"
-      : state === "loading"
-        ? "model missing"
-        : "model offline";
-  const dot =
-    state === "ready"
-      ? "bg-moss"
-      : state === "loading"
-        ? "bg-ochre"
-        : "bg-terracotta";
-  return (
-    <span
-      className="hidden items-center gap-2 rounded-full border border-rule-strong/70 bg-paper-raised px-3 py-1.5 font-mono text-[0.66rem] uppercase tracking-[0.08em] text-muted sm:inline-flex"
-      title={
-        health
-          ? `Ollama ${health.ollama ? "up" : "down"} · ${health.model}`
-          : "Checking model..."
-      }
-    >
-      <span className={cn("h-2 w-2 rounded-full", dot)} />
-      {label}
-    </span>
-  );
-}
-
-export function Navbar({
-  health,
-  modelReady,
-}: {
-  health: Health | null;
-  modelReady: boolean;
-}) {
+export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -61,7 +21,7 @@ export function Navbar({
           <span className="grid h-9 w-9 place-items-center rounded-sm bg-forest text-paper-raised">
             <Leaf size={18} />
           </span>
-          <span className="flex flex-col leading-none">
+          <span className="hidden flex-col leading-none sm:flex">
             <span className="font-serif text-[1.35rem] tracking-tight">
               Bioledger
             </span>
@@ -89,13 +49,14 @@ export function Navbar({
         </nav>
 
         <div className="flex items-center gap-2">
-          <StatusPill health={health} modelReady={modelReady} />
+          <InstallApp />
+          <ModelSelector />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label="Toggle navigation"
-            className="grid h-10 w-10 place-items-center rounded-sm text-forest hover:bg-sage lg:hidden"
+            className="grid h-11 w-11 place-items-center rounded-sm text-forest hover:bg-sage lg:hidden"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -115,7 +76,7 @@ export function Navbar({
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  "rounded-sm px-3 py-2.5 text-[0.95rem]",
+                  "flex min-h-[44px] items-center rounded-sm px-3 text-[0.95rem]",
                   isActive
                     ? "bg-sage text-forest"
                     : "text-muted hover:bg-sage/60 hover:text-forest",

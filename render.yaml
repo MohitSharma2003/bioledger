@@ -1,0 +1,51 @@
+# Render Blueprint for Bioledger (native Python, no Docker).
+#
+# This provisions one web service that serves both the FastAPI backend and the
+# built React app (web/static) on a single origin. That is the simplest live
+# path: the PWA, the service worker scope, and every /api call stay same-origin,
+# so no CORS or proxy wiring is needed.
+#
+# Ollama: the variables below point at the machine itself and are never exposed.
+# A public deploy has no Ollama, so the API reports it as offline and AI then
+# comes from the optional browser model (Transformers.js), which is fine.
+#
+# Persistence: Render Free and Starter plans use an ephemeral filesystem, so the
+# SQLite file and photos below reset on every restart/redeploy. Attach a
+# persistent disk and mount it at /var/data (Dashboard -> Web Service -> Disks)
+# on a paid instance to keep them across redeploys.
+#
+# If you prefer the Vercel frontend split instead of this service, see
+# DEPLOYMENT.md and vercel.json at the repository root.
+
+services:
+  - type: web
+    name: bioledger
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: OLLAMA_HOST
+        value: http://127.0.0.1:11434
+      - key: BIOLEDGER_MODEL
+        value: gemma3:4b
+      - key: BIOLEDGER_EMBED_MODEL
+        value: nomic-embed-text
+      - key: BIOLEDGER_VISION_MODEL
+        value: gemma3:4b
+      - key: BIOLEDGER_TIMEOUT
+        value: "10"
+      # Data lives under the persistent-disk mount point. Safe on free tiers as
+      # well: the app creates the directory at startup, but files do not survive
+      # a restart there.
+      - key: BIOLEDGER_DB
+        value: /var/data/bioledger.db
+      - key: BIOLEDGER_PHOTO_DIR
+        value: /var/data/photos
+      # Only required for a direct cross-origin frontend (not the same-origin
+      # UI). Provide these in the dashboard if you use one.
+      - key: BIOLEDGER_CORS_ORIGINS
+        sync: false
+      - key: BIOLEDGER_PUBLIC_BASE
+        sync: false

@@ -68,7 +68,10 @@ class SQLiteStore:
                     tags TEXT,
                     season_note TEXT,
                     embedding TEXT,
-                    source TEXT DEFAULT 'user'
+                    source TEXT DEFAULT 'user',
+                    photo_path TEXT,
+                    photo_mime TEXT,
+                    photo_bytes INTEGER
                 )
                 """
             )
@@ -77,6 +80,13 @@ class SQLiteStore:
                 con.execute(
                     "ALTER TABLE observations ADD COLUMN source TEXT DEFAULT 'user'"
                 )
+            for name, decl in (
+                ("photo_path", "TEXT"),
+                ("photo_mime", "TEXT"),
+                ("photo_bytes", "INTEGER"),
+            ):
+                if name not in columns:
+                    con.execute(f"ALTER TABLE observations ADD COLUMN {name} {decl}")
 
     @staticmethod
     def _row(row) -> dict:
@@ -91,8 +101,9 @@ class SQLiteStore:
                 """
                 INSERT INTO observations
                 (created_at, text, place, lat, lon, species, common_name, category,
-                 confidence, note, tags, season_note, embedding, source)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 confidence, note, tags, season_note, embedding, source,
+                 photo_path, photo_mime, photo_bytes)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     obs.get("created_at") or now_iso(),
@@ -109,9 +120,19 @@ class SQLiteStore:
                     obs.get("season_note"),
                     json.dumps(embedding) if embedding else None,
                     obs.get("source") or "user",
+                    obs.get("photo_path"),
+                    obs.get("photo_mime"),
+                    obs.get("photo_bytes"),
                 ),
             )
             return cur.lastrowid
+
+    def set_photo(self, obs_id: int, path, mime, nbytes) -> None:
+        with self._conn() as con:
+            con.execute(
+                "UPDATE observations SET photo_path = ?, photo_mime = ?, photo_bytes = ? WHERE id = ?",
+                (path, mime, nbytes, obs_id),
+            )
 
     def list_observations(self, limit: int = 100):
         with self._conn() as con:
@@ -286,8 +307,9 @@ class PostgresStore:
                 """
                 INSERT INTO observations
                 (created_at, text, place, lat, lon, species, common_name, category,
-                 confidence, note, tags, season_note, embedding, source)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s)
+                 confidence, note, tags, season_note, embedding, source,
+                 photo_path, photo_mime, photo_bytes)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s,%s,%s,%s)
                 RETURNING id
                 """,
                 (
@@ -305,9 +327,19 @@ class PostgresStore:
                     obs.get("season_note"),
                     self._vec(embedding),
                     obs.get("source") or "user",
+                    obs.get("photo_path"),
+                    obs.get("photo_mime"),
+                    obs.get("photo_bytes"),
                 ),
             ).fetchone()
             return row["id"]
+
+    def set_photo(self, obs_id: int, path, mime, nbytes) -> None:
+        with self._conn() as con:
+            con.execute(
+                "UPDATE observations SET photo_path = %s, photo_mime = %s, photo_bytes = %s WHERE id = %s",
+                (path, mime, nbytes, obs_id),
+            )
 
     def list_observations(self, limit: int = 100):
         with self._conn() as con:
@@ -429,17 +461,31 @@ class PostgresStore:
 _store = None
 
 
+def _sqlite_store() -> "SQLiteStore":
+    sqlite = SQLiteStore(config.SQLITE_PATH)
+    sqlite.init()
+    return sqlite
+
+
 def get_store():
+    """Pick the store backend.
+
+    Postgres/Tiger is an optional, additive backend: if it is requested but
+    cannot be reached or initialised, we fall back to the SQLite default so a
+    misconfigured or offline database never takes the app down.
+    """
     global _store
     if _store is not None:
         return _store
     url = config.DATABASE_URL
     if url.startswith("postgres"):
         try:
-            _store = PostgresStore(url)
+            candidate = PostgresStore(url)
+            candidate.init()
+            _store = candidate
+            return _store
         except Exception:
-            _store = SQLiteStore(config.SQLITE_PATH)
-    else:
-        _store = SQLiteStore(config.SQLITE_PATH)
-    _store.init()
+            # Leave _store unset and continue to the local default below.
+            _store = None
+    _store = _sqlite_store()
     return _store

@@ -133,7 +133,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center rounded-full border px-3.5 py-1.5 text-[0.82rem] transition-colors",
+        "inline-flex min-h-[44px] items-center rounded-full border px-4 text-[0.82rem] transition-colors",
         active
           ? "border-forest bg-forest text-paper-raised"
           : "border-rule-strong/70 text-forest hover:bg-sage",

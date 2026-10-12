@@ -32,7 +32,7 @@ export function InSeason({
           type="button"
           onClick={onSeed}
           disabled={seeding}
-          className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-moss underline-offset-4 hover:underline disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center font-mono text-[0.68rem] uppercase tracking-[0.08em] text-moss underline-offset-4 hover:underline disabled:opacity-50"
         >
           {seeding ? "loading..." : "load sample week"}
         </button>

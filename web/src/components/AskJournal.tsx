@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Loader2, MessageCircleQuestion, Quote } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { api } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { CategoryDot } from "./bits";
 import { cn } from "../lib/utils";
+import { useModels } from "../lib/models/context";
 import type { Observation } from "../lib/types";
 
 const EXAMPLES = [
@@ -19,6 +19,7 @@ export function AskJournal({
 }: {
   onOpenSource: (id: number) => void;
 }) {
+  const { answerQuestion } = useModels();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [sources, setSources] = useState<Observation[]>([]);
@@ -36,7 +37,7 @@ export function AskJournal({
     setAnswer(null);
     setAsked(q);
     try {
-      const res = await api.ask(q);
+      const res = await answerQuestion(q);
       setAnswer(res.answer);
       setSources(res.sources ?? []);
       setMode(res.mode);
@@ -78,7 +79,7 @@ export function AskJournal({
             type="button"
             onClick={() => setQuestion(ex)}
             className={cn(
-              "rounded-full border border-rule-strong/60 px-3 py-1 text-[0.8rem] text-muted transition-colors",
+              "inline-flex min-h-[44px] items-center rounded-full border border-rule-strong/60 px-3.5 text-[0.8rem] text-muted transition-colors",
               "hover:border-moss hover:text-forest",
             )}
           >
@@ -102,7 +103,9 @@ export function AskJournal({
           <p className="mt-4 font-mono text-[0.66rem] uppercase tracking-[0.08em] text-muted">
             {mode === "model"
               ? "answered by the local model from the entries below"
-              : "the local model was not reachable, so this is a fixed reply"}
+              : mode === "browser"
+                ? "answered in this browser from the entries below"
+                : "the local model was not reachable, so this is a fixed reply"}
           </p>
           {sources.length && asked ? (
             <div className="mt-5 border-t border-rule pt-4">

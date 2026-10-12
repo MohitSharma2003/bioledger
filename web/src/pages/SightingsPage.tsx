@@ -67,7 +67,7 @@ export function SightingsPage() {
         title="My sightings"
         lead="Every record you have saved, newest first. Search by species, note, or place, or narrow the list by category. Records loaded from the sample data are tagged."
         actions={
-          <Button variant="outline" size="sm" onClick={seed} disabled={seeding}>
+          <Button variant="outline" size="md" onClick={seed} disabled={seeding}>
             <Database size={15} />
             {seeding ? "Loading..." : "Load sample week"}
           </Button>

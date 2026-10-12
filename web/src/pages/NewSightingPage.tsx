@@ -5,13 +5,11 @@ import { NewSighting } from "../components/NewSighting";
 import { AiBanner } from "../components/AiBanner";
 import { PageHeader } from "../components/bits";
 import { Button, buttonVariants } from "../components/ui/button";
-import { useApp } from "../lib/app-context";
 import { api } from "../lib/api";
 import { cn } from "../lib/utils";
 import type { Stats } from "../lib/types";
 
 export function NewSightingPage() {
-  const { health, modelReady } = useApp();
   const [notice, setNotice] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
 
@@ -60,11 +58,10 @@ export function NewSightingPage() {
       </div>
 
       <div className="mb-8">
-        <AiBanner notice={notice} health={health} modelReady={modelReady} />
+        <AiBanner notice={notice} />
       </div>
 
       <NewSighting
-        modelReady={modelReady}
         onResult={setNotice}
         onLogged={refreshStats}
       />
@@ -74,9 +71,9 @@ export function NewSightingPage() {
 
 function LedgerGlance({ stats }: { stats: Stats | null }) {
   return (
-    <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-[1.875rem] py-6 shadow-specimen sm:w-auto">
-      <p className="field-label mb-4 text-[1.17rem]">Your ledger</p>
-      <div className="flex items-end gap-12">
+    <aside className="w-full rounded-sm border border-rule bg-paper-raised/70 px-6 py-5 shadow-specimen sm:w-auto sm:px-[1.875rem] sm:py-6">
+      <p className="field-label mb-3 text-[1rem] sm:mb-4 sm:text-[1.17rem]">Your ledger</p>
+      <div className="flex items-end gap-6 sm:gap-12">
         <Glance value={stats?.total ?? 0} label="sightings" tone="text-forest" />
         <Glance value={stats?.species ?? 0} label="species" tone="text-moss" />
         <Glance
@@ -100,8 +97,8 @@ function Glance({
 }) {
   return (
     <div>
-      <div className={cn("font-serif text-[5.625rem] leading-none", tone)}>{value}</div>
-      <div className="mt-[0.5625rem] font-mono text-[1.08rem] uppercase tracking-[0.1em] text-muted">
+      <div className={cn("font-serif text-[3.25rem] leading-none sm:text-[5.625rem]", tone)}>{value}</div>
+      <div className="mt-[0.375rem] font-mono text-[0.8rem] uppercase tracking-[0.1em] text-muted sm:mt-[0.5625rem] sm:text-[1.08rem]">
         {label}
       </div>
     </div>
